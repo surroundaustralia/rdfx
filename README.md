@@ -4,7 +4,7 @@ A small Python script to convert RDF data formats. This uses [RDFlib](https://py
 use: 
 
 ```
-~$ convert.py [-d] FILE-DIR EXT [-i]
+~$ rdfx.py [-d] FILE-DIR EXT [-i]
 ```
 
 Command | Description

@@ -83,9 +83,7 @@ if __name__ == "__main__":
 	parser.add_argument(
 		"ext",
 		type=str,
-		help="The RDFlib token for the RDF format you want to convert the RDF file to. Must be one of '{}'".format(
-					", ".join(RDF_FILE_ENDINGS.keys())
-				),
+		help="The RDFlib token for the RDF format you want to convert the RDF file to.",
 		choices=RDF_FILE_ENDINGS.keys()
 	)
 
@@ -109,8 +107,8 @@ if __name__ == "__main__":
 			raise Exception(e)
 
 	if Path.is_dir(args.data):
-		print("converting directory {}".format(sys.argv[2]))
-		for f in glob.glob(path.join(sys.argv[2], "*")):
+		print("converting directory {}".format(args.data))
+		for f in Path(args.data).glob("*"):
 			print("converting {}".format(f))
 
 			input_format = get_input_format(f)

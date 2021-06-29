@@ -1,20 +1,38 @@
 # rdfx
 A small Python script to convert RDF data formats. This uses [RDFlib](https://pypi.org/project/rdflib/).
 
-use: 
+## Use
+The same command line arguments are used when running this script as either Python or BASH.
 
+### Python
+Run the `rdfx.py` script with Python having installed the packages required by _requirements.txt_. 
+
+### BASH (Linux, Mac etc)
+For Linux/Mac command line use, use `rdfx.sh`. This just calls the Python script, `rdfx.py` with your default Python installation and send it all the command line arguments. You must have the Python dependencies installed (see above) in your default Python environment to run this.
+
+### Commands
+These usage notes come from running the help command in the tool, e.g. `sh rdfx.sh -h`:
+
+```bash
+usage: rdfx.py [-h] [-i] [-p PREFIXES]
+               data {ttl,turtle,json,json-ld,jsonld,owl,xml,rdf,nt,n3}
+
+positional arguments:
+  data                  Path to the RDF file or directory of files
+  {ttl,turtle,json,json-ld,jsonld,owl,xml,rdf,nt,n3}
+                        The RDFlib token for the RDF format you want to
+                        convert the RDF file to.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i, --inplace         if set, the file is converted in place, i.e. output
+                        file = input file
+  -p PREFIXES, --prefixes PREFIXES
+                        A path to a file containing a JSON dictionary of
+                        prefixes and their corresponding namespaces that will
+                        be bound to the graph. These will override any
+                        existing, conflicting, prefixes
 ```
-~$ rdfx.py [-d] FILE-DIR EXT [-i]
-```
-
-Command | Description
---- | ---  
-`-d` | convert files in a directory  
-`FILE-DIR` | an RDF file or directory of RDF files if -d used. The file or files must have file extensions of one of ttl, turtle, json, json-ld, jsonld, owl, xml, rdf, nt, n3  
-`EXT` | the RDF format you want to convert to. Must be one of turtle, xml, json-ld, nt, n3  
-`-i` | convert in place - overwrites existing file if to & from formats are the same  
-
-For Linux/Mac command line use, use `convert.sh`
 
 
 ## License

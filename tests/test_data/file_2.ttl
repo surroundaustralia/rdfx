@@ -1,0 +1,17 @@
+@prefix data: <https://data.surroundaustralia.com/cadastre-3d/> .
+@prefix defn: <https://surroundaustralia.com/cadastre-3d/def/> .
+@prefix doco: <http://purl.org/spar/doco/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix patt: <http://www.essepuntato.it/2008/12/pattern#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix sopdoc: <https://data.surroundaustralia.com/def/sopdoc/> .
+
+data:node-3f5aadc1-8b77-4981-9896-83fc9fd8be1f a doco:Paragraph ;
+    skos:definition "This standard is not intended to be used as a guide to capture a CSD." ;
+    sopdoc:hasNumbering "(b)" ;
+    defn:next data:node-62e37fc2-71fd-48ee-af4d-61394c92ebdd .
+
+<https://data.surroundaustralia.com/dataset/standard_for_lodgement_of_cadastral_survey_datasets> a owl:Ontology ;
+    rdfs:label "RDF representation of standard_for_lodgement_of_cadastral_survey_datasets_-_linzs70000-adobe-online.docx "@en ;
+    rdfs:comment "Output utilises the SOP Document ontology, drawing from the DOCO ontology."@en .

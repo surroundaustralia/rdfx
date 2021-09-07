@@ -1,5 +1,5 @@
 # rdfx
-A small Python script to convert RDF data formats. This uses [RDFlib](https://pypi.org/project/rdflib/).
+A small Python utility to convert RDF data formats, merge RDF data and persist it. This uses [RDFlib](https://pypi.org/project/rdflib/).
 
 ## Use
 The same command line arguments are used when running this script as either Python or BASH.

@@ -1,14 +1,12 @@
 import sys
 from os import path
 import glob
-import rdflib
+from rdflib import Graph, util
 import argparse
 from pathlib import Path
 import json
+from persistence_systems import *
 
-if "-h" not in sys.argv and len(sys.argv) < 3:
-	print("ERROR: You must supply two command line arguments: the RDF file to convert and the format to convert to")
-	exit()
 
 RDF_FILE_ENDINGS = {
 	"ttl": "turtle",
@@ -33,7 +31,7 @@ OUTPUT_FILE_ENDINGS = {
 
 
 def get_input_format(file_path):
-	input_format = rdflib.util.guess_format(file_path)
+	input_format = util.guess_format(file_path)
 	if input_format is None:
 		if sys.argv[1].endswith("json-ld") or file_path.endswith("jsonld") or file_path.endswith("jsonld"):
 			input_format = "json-ld"
@@ -57,14 +55,35 @@ def make_output_file_path(input_file_path, input_format, output_format, in_place
 
 
 def convert(input_file_path, input_format, output_file_path, output_format, prefixes=None):
-	g = rdflib.Graph().parse(str(input_file_path), format=input_format)
+	g = Graph().parse(str(input_file_path), format=input_format)
 	if prefixes is not None:
 		for k, v in prefixes.items():
 			g.bind(k, v)
 	g.serialize(destination=str(output_file_path), format=output_format)
 
 
+def merge(rdf_files: List[Path]) -> Graph:
+	"""
+	Merges a given set of RDF files into one graph
+
+	"""
+	g = Graph()
+	for f in rdf_files:
+		g.parse(str(f))
+	return g
+
+
+def persist_to(persistence_system: PersistenceSystem):
+	if not issubclass(type(persistence_system), PersistenceSystem):
+		return ValueError(
+			f"You must select of the the subclasses of PersistenceSystem to use for the persistence_system argument")
+
+
 if __name__ == "__main__":
+	if "-h" not in sys.argv and len(sys.argv) < 3:
+		print("ERROR: You must supply two command line arguments: the RDF file to convert and the format to convert to")
+		exit()
+
 	parser = argparse.ArgumentParser()
 
 	parser.add_argument(

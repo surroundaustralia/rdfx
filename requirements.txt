@@ -1,3 +1,4 @@
 git+https://github.com/RDFlib/rdflib.git#egg=rdflib
 httpx
 requests
+pytest

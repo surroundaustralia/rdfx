@@ -5,7 +5,7 @@ from rdflib import Graph, util
 import argparse
 from pathlib import Path
 import json
-from persistence_systems import *
+from .persistence_systems import *
 
 
 RDF_FILE_ENDINGS = {
@@ -67,9 +67,14 @@ def merge(rdf_files: List[Path]) -> Graph:
 	Merges a given set of RDF files into one graph
 
 	"""
+	for f in rdf_files:
+		if not f.name.endswith(tuple(RDF_FILE_ENDINGS.keys())):
+			raise ValueError(
+				f"Files to be merged must have a known RDF suffix (one of {', '.join(RDF_FILE_ENDINGS)})")
+
 	g = Graph()
 	for f in rdf_files:
-		g.parse(str(f))
+		g.parse(f, format=RDF_FILE_ENDINGS[f.suffix.lstrip(".")])
 	return g
 
 

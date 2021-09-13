@@ -8,4 +8,3 @@
     sdo:email "nicholas.car@surroundaustralia.com"^^xsd:anyURI ;
     sdo:jobTitle "Data Systems Architect" ;
     sdo:name "Nicholas J. Car" .
-

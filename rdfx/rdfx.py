@@ -78,10 +78,12 @@ def merge(rdf_files: List[Path]) -> Graph:
 	return g
 
 
-def persist_to(persistence_system: PersistenceSystem):
+def persist_to(persistence_system: PersistenceSystem, g: Graph):
 	if not issubclass(type(persistence_system), PersistenceSystem):
 		return ValueError(
 			f"You must select of the the subclasses of PersistenceSystem to use for the persistence_system argument")
+	else:
+		persistence_system.persist(g)
 
 
 if __name__ == "__main__":

@@ -3,9 +3,11 @@ from abc import ABC, abstractmethod
 
 import requests
 from rdflib import Graph
-from typing import Literal, Optional, List
+from typing import Literal, Optional, List, Union
 from pathlib import Path
 import warnings
+import os
+from io import BytesIO
 
 RDF_FORMATS = Literal[
     "turtle",
@@ -16,7 +18,25 @@ RDF_FORMATS = Literal[
 ]
 
 
+
 class PersistenceSystem(ABC):
+
+    def __init__(
+            self,
+            rdf_format: RDF_FORMATS,
+            leading_comments: Optional[List[str]] = None
+            ):
+
+        if rdf_format not in RDF_FORMATS.__args__:
+            raise ValueError(
+                f"The RDF format selected must be one of {', '.join(RDF_FORMATS.__args__)}")
+
+        if leading_comments is not None:
+            if rdf_format != "turtle":
+                raise ValueError(f"If leading_comments is provided, rdf_format must be turtle")
+            if any(lc.startswith("#") for lc in leading_comments):
+                raise ValueError(f"leading_comments may not start with #. It will be added")
+
     @abstractmethod
     def persist(self, g: Graph):
         """
@@ -57,14 +77,7 @@ class String(PersistenceSystem):
         self.leading_comments = leading_comments
 
     def persist(self, g: Graph):
-        if self.leading_comments is None:
-            return g.serialize(format=self.rdf_format)
-        else:
-            s = ""
-            for lc in self.leading_comments:
-                s += f"# {lc}\n"
-            s += g.serialize(format=self.rdf_format)
-            return s
+        return generate_string(g, self.rdf_format, self.leading_comments)
 
 
 class File(PersistenceSystem):
@@ -80,43 +93,91 @@ class File(PersistenceSystem):
 
     def __init__(
             self,
-            file_path: Path,
+            file_path: Union[Path, str],
             rdf_format: RDF_FORMATS,
             leading_comments: Optional[List[str]] = None
+
     ):
-        if not isinstance(file_path, Path):
-            raise ValueError(f"The file path must be of type Path")
+        super().__init__(rdf_format, leading_comments)
+        if not isinstance(file_path, (Path, str)):
+            raise ValueError(f"The file path must be a string or pathlib Path")
 
-        if rdf_format not in RDF_FORMATS.__init__("__args__"):
-            raise ValueError(
-                f"The RDF format selected must be one of {', '.join(RDF_FORMATS.__init__('__args__'))}")
 
-        if leading_comments is not None:
-            if rdf_format != "turtle":
-                raise ValueError(f"If leading_comments is provided, rdf_format must be turtle")
-            if any(lc.startswith("#") for lc in leading_comments):
-                raise ValueError(f"leading_comments may not start with #. It will be added")
-
-        self.file_path = file_path
+        self.file_path = Path(file_path).resolve()
         self.rdf_format = rdf_format
         self.leading_comments = leading_comments
 
     def persist(self, g: Graph):
-        if self.leading_comments is None:
-            g.serialize(destination=str(self.file_path), format=self.rdf_format)
-            return True
-        else:
-            s = ""
-            for lc in self.leading_comments:
-                s += f"# {lc}\n"
-            s += g.serialize(format=self.rdf_format)
-            with open(self.file_path, "w") as f:
-                f.write(s)
-            return True
+        s = generate_string(g, self.rdf_format, self.leading_comments)
+        with self.file_path.open("w") as f:
+            f.write(s)
+        return self.file_path
+
+def generate_string(g, rdf_format, leading_comments):
+    if leading_comments is None:
+        return g.serialize(format=rdf_format)
+    else:
+        s = ""
+        for lc in leading_comments:
+            s += f"# {lc}\n"
+            # add a new line after the leading comments
+        s += "\n"
+        s += g.serialize(format=rdf_format)
+        return s
 
 
 class S3(PersistenceSystem):
-    pass
+    """
+    Persist the graph to S3
+
+    Args:
+        bucket (str): The S3 bucket to persist to
+        key (str): The name of the object to store in S3
+        aws_key: The key part of the credentials to authenticate with AWS for this bucket
+        aws_secret: The secret part of the credentials to authenticate with AWS for this bucket
+        rdf_format (str): The RDFlib RDF format to serialise the RDF to
+        leading_comments (List[str]): Strings to add as comments to the start of the output.
+                                      # will be automatically inserted at the start of each
+    """
+
+    def __init__(
+            self,
+            bucket: str,
+            key: str,
+            aws_key: str,
+            aws_secret: str,
+            rdf_format: RDF_FORMATS,
+            leading_comments: Optional[List[str]] = None
+            ):
+        for item in [bucket, key, aws_key, aws_secret]:
+            if not isinstance(item, str):
+                raise ValueError(f"{item} is of type {type(item)}, but must be a string")
+
+        self.bucket = bucket
+        self.key = key
+        self.aws_key = aws_key
+        self.aws_secret = aws_secret
+        self.rdf_format = rdf_format
+        self.leading_comments = leading_comments
+
+    def persist(self, g):
+        s = generate_string(g, self.rdf_format, self.leading_comments)
+        bytes_obj = BytesIO(s)
+        try:
+            import boto3
+        except ImportError:
+            raise
+        client = boto3.client(
+            "s3",
+            aws_access_key_id=self.aws_key,
+            aws_secret_access_key=self.aws_secret,
+            )
+
+        response = client.put_object(Body=bytes_obj, Bucket=self.bucket, Key=self.key)
+
+        if response:
+            raise
+        return
 
 
 class GraphDB(PersistenceSystem):

@@ -1,6 +1,5 @@
 # Google-style docstrings: https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
 from abc import ABC, abstractmethod
-
 import requests
 from rdflib import Graph
 from typing import Literal, Optional, List, Union
@@ -8,6 +7,8 @@ from pathlib import Path
 import warnings
 import os
 from io import BytesIO
+import logging
+from http import HTTPStatus
 
 RDF_FORMATS = Literal[
     "turtle",
@@ -16,7 +17,6 @@ RDF_FORMATS = Literal[
     "nt",
     "n3"
 ]
-
 
 
 class PersistenceSystem(ABC):
@@ -62,7 +62,7 @@ class String(PersistenceSystem):
             self,
             rdf_format: RDF_FORMATS,
             leading_comments: Optional[List[str]] = None
-    ):
+            ):
         if rdf_format not in RDF_FORMATS.__init__("__args__"):
             raise ValueError(
                 f"The RDF format selected must be one of {', '.join(RDF_FORMATS.__init__('__args__'))}")
@@ -97,11 +97,10 @@ class File(PersistenceSystem):
             rdf_format: RDF_FORMATS,
             leading_comments: Optional[List[str]] = None
 
-    ):
+            ):
         super().__init__(rdf_format, leading_comments)
         if not isinstance(file_path, (Path, str)):
             raise ValueError(f"The file path must be a string or pathlib Path")
-
 
         self.file_path = Path(file_path).resolve()
         self.rdf_format = rdf_format
@@ -112,6 +111,7 @@ class File(PersistenceSystem):
         with self.file_path.open("w") as f:
             f.write(s)
         return self.file_path
+
 
 def generate_string(g, rdf_format, leading_comments):
     if leading_comments is None:
@@ -147,9 +147,10 @@ class S3(PersistenceSystem):
             aws_key: str,
             aws_secret: str,
             rdf_format: RDF_FORMATS,
+            region: str = 'ap-southeast-2',
             leading_comments: Optional[List[str]] = None
             ):
-        for item in [bucket, key, aws_key, aws_secret]:
+        for item in [bucket, key, aws_key, aws_secret, region]:
             if not isinstance(item, str):
                 raise ValueError(f"{item} is of type {type(item)}, but must be a string")
 
@@ -157,27 +158,38 @@ class S3(PersistenceSystem):
         self.key = key
         self.aws_key = aws_key
         self.aws_secret = aws_secret
+        self.region = region
         self.rdf_format = rdf_format
         self.leading_comments = leading_comments
 
     def persist(self, g):
         s = generate_string(g, self.rdf_format, self.leading_comments)
-        bytes_obj = BytesIO(s)
+        bytes_obj = BytesIO(s.encode('utf-8'))
         try:
-            import boto3
+            import boto3, botocore
         except ImportError:
             raise
-        client = boto3.client(
-            "s3",
-            aws_access_key_id=self.aws_key,
-            aws_secret_access_key=self.aws_secret,
-            )
-
-        response = client.put_object(Body=bytes_obj, Bucket=self.bucket, Key=self.key)
-
-        if response:
-            raise
-        return
+        args = ['s3']
+        kwargs = {
+            'aws_access_key_id': self.aws_key,
+            'aws_secret_access_key': self.aws_secret,
+            'region_name': self.region
+            }
+        s3 = boto3.resource(*args, **kwargs)
+        bucket = s3.Bucket(self.bucket)
+        # try to put the object - this will fail if the bucket doesn't exist (or credential errors etc.)
+        try:
+            response = bucket.put_object(Body=bytes_obj, Bucket=self.bucket, Key=self.key)
+        except botocore.errorfactory.ClientError as e:
+            logging.info(f"ClientError {e}. Assuming Bucket does not exist and creating it")
+            client = boto3.client(*args, **kwargs)
+            location = {'LocationConstraint': self.region}
+            client.create_bucket(Bucket=self.bucket, CreateBucketConfiguration=location)
+            response = client.put_object(Body=bytes_obj, Bucket=self.bucket, Key=self.key)
+        if response["ResponseMetadata"]["HTTPStatusCode"] == HTTPStatus.OK:
+            return self.key
+        else:
+            response.raise_for_status()
 
 
 class GraphDB(PersistenceSystem):
@@ -199,7 +211,7 @@ class GraphDB(PersistenceSystem):
             graph_iri: Optional[str] = None,
             username: Optional[str] = None,
             password: Optional[str] = None,
-    ):
+            ):
 
         if system_iri is None or not system_iri.startswith("http"):
             raise ValueError(f"The value you supplied for system_iri ({system_iri}) is not valid")
@@ -236,7 +248,7 @@ class Fuseki(PersistenceSystem):
             graph_iri: Optional[str] = None,
             username: Optional[str] = None,
             password: Optional[str] = None,
-    ):
+            ):
 
         if system_iri is None or not system_iri.startswith("http"):
             raise ValueError(f"The value you supplied for system_iri ({system_iri}) is not valid")
@@ -272,7 +284,7 @@ class SOP(PersistenceSystem):
             graph_iri: Optional[str] = None,
             username: Optional[str] = None,
             password: Optional[str] = None,
-    ):
+            ):
         if system_iri is None or not system_iri.startswith("http"):
             raise ValueError(f"The value you supplied for system_iri ({system_iri}) is not valid")
 
@@ -301,7 +313,7 @@ class SOP(PersistenceSystem):
                 s.post(
                     self.system_iri + "/tbl/j_security_check",
                     data={"j_username": self.username, "j_password": self.password},
-                )
+                    )
                 # detect success!
                 if reuse_sessions:
                     saved_session_cookies = s.cookies
@@ -317,9 +329,9 @@ class SOP(PersistenceSystem):
                 data={
                     "update": q,
                     "using-graph-uri": self.graph_iri
-                },
+                    },
                 headers={"Accept": "application/sparql-results+json"},
-            )
+                )
 
             # force logout of session
             s.get(self.system_iri + "/tbl/purgeuser?app=edg")

@@ -13,7 +13,7 @@ g = Graph().parse(
     format="turtle"
 )
 
-class GenericTests(unittest.TestCase):
+class FileTests(unittest.TestCase):
 
     def test_pathlib(self):
         """Test a graph can be persisted to file from a pathlib Path"""
@@ -39,5 +39,3 @@ class GenericTests(unittest.TestCase):
 
     def test_other_formats(self):
         pass
-
-

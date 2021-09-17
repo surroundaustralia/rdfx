@@ -10,32 +10,40 @@ from io import BytesIO
 import logging
 from http import HTTPStatus
 
-RDF_FORMATS = Literal[
-    "turtle",
-    "xml",
-    "json-ld",
-    "nt",
-    "n3"
-]
+RDF_FORMATS = Literal["turtle", "xml", "json-ld", "nt", "n3"]
+RDF_FILE_ENDINGS = {
+    "ttl": "turtle",
+    "turtle": "turtle",
+    "json": "json-ld",
+    "json-ld": "json-ld",
+    "jsonld": "json-ld",
+    "owl": "xml",
+    "xml": "xml",
+    "rdf": "xml",
+    "nt": "nt",
+    "n3": "n3",
+    }
 
 
 class PersistenceSystem(ABC):
-
     def __init__(
-            self,
-            rdf_format: RDF_FORMATS,
-            leading_comments: Optional[List[str]] = None
+            self, rdf_format: RDF_FORMATS, leading_comments: Optional[List[str]] = None
             ):
 
         if rdf_format not in RDF_FORMATS.__args__:
             raise ValueError(
-                f"The RDF format selected must be one of {', '.join(RDF_FORMATS.__args__)}")
+                f"The RDF format selected must be one of {', '.join(RDF_FORMATS.__args__)}"
+                )
 
         if leading_comments is not None:
             if rdf_format != "turtle":
-                raise ValueError(f"If leading_comments is provided, rdf_format must be turtle")
+                raise ValueError(
+                    f"If leading_comments is provided, rdf_format must be turtle"
+                    )
             if any(lc.startswith("#") for lc in leading_comments):
-                raise ValueError(f"leading_comments may not start with #. It will be added")
+                raise ValueError(
+                    f"leading_comments may not start with #. It will be added"
+                    )
 
     @abstractmethod
     def persist(self, g: Graph):
@@ -59,19 +67,22 @@ class String(PersistenceSystem):
     """
 
     def __init__(
-            self,
-            rdf_format: RDF_FORMATS,
-            leading_comments: Optional[List[str]] = None
+            self, rdf_format: RDF_FORMATS, leading_comments: Optional[List[str]] = None
             ):
         if rdf_format not in RDF_FORMATS.__init__("__args__"):
             raise ValueError(
-                f"The RDF format selected must be one of {', '.join(RDF_FORMATS.__init__('__args__'))}")
+                f"The RDF format selected must be one of {', '.join(RDF_FORMATS.__init__('__args__'))}"
+                )
 
         if leading_comments is not None:
             if rdf_format != "turtle":
-                raise ValueError(f"If leading_comments is provided, rdf_format must be turtle")
+                raise ValueError(
+                    f"If leading_comments is provided, rdf_format must be turtle"
+                    )
             if any(lc.startswith("#") for lc in leading_comments):
-                raise ValueError(f"leading_comments may not start with #. It will be added")
+                raise ValueError(
+                    f"leading_comments may not start with #. It will be added"
+                    )
 
         self.rdf_format = rdf_format
         self.leading_comments = leading_comments
@@ -95,8 +106,7 @@ class File(PersistenceSystem):
             self,
             file_path: Union[Path, str],
             rdf_format: RDF_FORMATS,
-            leading_comments: Optional[List[str]] = None
-
+            leading_comments: Optional[List[str]] = None,
             ):
         super().__init__(rdf_format, leading_comments)
         if not isinstance(file_path, (Path, str)):
@@ -120,7 +130,7 @@ def generate_string(g, rdf_format, leading_comments):
         s = ""
         for lc in leading_comments:
             s += f"# {lc}\n"
-            # add a new line after the leading comments
+        # add a new line after the leading comments
         s += "\n"
         s += g.serialize(format=rdf_format)
         return s
@@ -147,12 +157,14 @@ class S3(PersistenceSystem):
             aws_key: str,
             aws_secret: str,
             rdf_format: RDF_FORMATS,
-            region: str = 'ap-southeast-2',
-            leading_comments: Optional[List[str]] = None
+            region: str = "ap-southeast-2",
+            leading_comments: Optional[List[str]] = None,
             ):
         for item in [bucket, key, aws_key, aws_secret, region]:
             if not isinstance(item, str):
-                raise ValueError(f"{item} is of type {type(item)}, but must be a string")
+                raise ValueError(
+                    f"{item} is of type {type(item)}, but must be a string"
+                    )
 
         self.bucket = bucket
         self.key = key
@@ -164,28 +176,34 @@ class S3(PersistenceSystem):
 
     def persist(self, g):
         s = generate_string(g, self.rdf_format, self.leading_comments)
-        bytes_obj = BytesIO(s.encode('utf-8'))
+        bytes_obj = BytesIO(s.encode("utf-8"))
         try:
             import boto3, botocore
         except ImportError:
             raise
-        args = ['s3']
+        args = ["s3"]
         kwargs = {
-            'aws_access_key_id': self.aws_key,
-            'aws_secret_access_key': self.aws_secret,
-            'region_name': self.region
+            "aws_access_key_id": self.aws_key,
+            "aws_secret_access_key": self.aws_secret,
+            "region_name": self.region,
             }
         s3 = boto3.resource(*args, **kwargs)
         bucket = s3.Bucket(self.bucket)
         # try to put the object - this will fail if the bucket doesn't exist (or credential errors etc.)
         try:
-            response = bucket.put_object(Body=bytes_obj, Bucket=self.bucket, Key=self.key)
+            response = bucket.put_object(
+                Body=bytes_obj, Bucket=self.bucket, Key=self.key
+                )
         except botocore.errorfactory.ClientError as e:
-            logging.info(f"ClientError {e}. Assuming Bucket does not exist and creating it")
+            logging.info(
+                f"ClientError {e}. Assuming Bucket does not exist and creating it"
+                )
             client = boto3.client(*args, **kwargs)
-            location = {'LocationConstraint': self.region}
+            location = {"LocationConstraint": self.region}
             client.create_bucket(Bucket=self.bucket, CreateBucketConfiguration=location)
-            response = client.put_object(Body=bytes_obj, Bucket=self.bucket, Key=self.key)
+            response = client.put_object(
+                Body=bytes_obj, Bucket=self.bucket, Key=self.key
+                )
         if response["ResponseMetadata"]["HTTPStatusCode"] == HTTPStatus.OK:
             return self.key
         else:
@@ -214,13 +232,19 @@ class GraphDB(PersistenceSystem):
             ):
 
         if system_iri is None or not system_iri.startswith("http"):
-            raise ValueError(f"The value you supplied for system_iri ({system_iri}) is not valid")
+            raise ValueError(
+                f"The value you supplied for system_iri ({system_iri}) is not valid"
+                )
 
         if repo_id is None:
             raise ValueError(f"The value you supplied for repo_id cannot be None")
 
-        if graph_iri is not None and not (graph_iri.startswith("http") or graph_iri.startswith("urn")):
-            raise ValueError(f"The value you supplied for graph_iri ({graph_iri}) is not valid")
+        if graph_iri is not None and not (
+                graph_iri.startswith("http") or graph_iri.startswith("urn")
+        ):
+            raise ValueError(
+                f"The value you supplied for graph_iri ({graph_iri}) is not valid"
+                )
 
         self.system_iri = system_iri
         self.repo_id = repo_id
@@ -251,13 +275,19 @@ class Fuseki(PersistenceSystem):
             ):
 
         if system_iri is None or not system_iri.startswith("http"):
-            raise ValueError(f"The value you supplied for system_iri ({system_iri}) is not valid")
+            raise ValueError(
+                f"The value you supplied for system_iri ({system_iri}) is not valid"
+                )
 
         if repo_id is None:
             raise ValueError(f"The value you supplied for repo_id cannot be None")
 
-        if graph_iri is not None and not (graph_iri.startswith("http") or graph_iri.startswith("urn")):
-            raise ValueError(f"The value you supplied for graph_iri ({graph_iri}) is not valid")
+        if graph_iri is not None and not (
+                graph_iri.startswith("http") or graph_iri.startswith("urn")
+        ):
+            raise ValueError(
+                f"The value you supplied for graph_iri ({graph_iri}) is not valid"
+                )
 
         self.system_iri = system_iri
         self.repo_id = repo_id
@@ -286,10 +316,16 @@ class SOP(PersistenceSystem):
             password: Optional[str] = None,
             ):
         if system_iri is None or not system_iri.startswith("http"):
-            raise ValueError(f"The value you supplied for system_iri ({system_iri}) is not valid")
+            raise ValueError(
+                f"The value you supplied for system_iri ({system_iri}) is not valid"
+                )
 
-        if graph_iri is not None and not (graph_iri.startswith("http") or graph_iri.startswith("urn")):
-            raise ValueError(f"The value you supplied for graph_iri ({graph_iri}) is not valid")
+        if graph_iri is not None and not (
+                graph_iri.startswith("http") or graph_iri.startswith("urn")
+        ):
+            raise ValueError(
+                f"The value you supplied for graph_iri ({graph_iri}) is not valid"
+                )
 
         self.system_iri = system_iri
         self.graph_iri = graph_iri
@@ -321,15 +357,14 @@ class SOP(PersistenceSystem):
             # prepare the INSERT query
             q = ""
             with warnings.catch_warnings():
-                warnings.simplefilter("ignore")  # ignore the rdflib NT serializer warning
+                warnings.simplefilter(
+                    "ignore"
+                    )  # ignore the rdflib NT serializer warning
                 q = "INSERT DATA {\n" + g.serialize(format="nt") + "\n}"
 
             response = s.post(
                 self.system_iri + "/tbl/sparql",
-                data={
-                    "update": q,
-                    "using-graph-uri": self.graph_iri
-                    },
+                data={"update": q, "using-graph-uri": self.graph_iri},
                 headers={"Accept": "application/sparql-results+json"},
                 )
 
@@ -337,3 +372,21 @@ class SOP(PersistenceSystem):
             s.get(self.system_iri + "/tbl/purgeuser?app=edg")
 
             return response
+
+
+def prepare_files_list(files: Union[str, list, Path]) -> list:
+    if isinstance(files, (str, Path)):
+        files = [files]
+    elif isinstance(files, (list)):
+        pass
+    else:
+        raise ValueError("You must pass a string, pathlib Path, or list of these")
+    files_list = []  # [Path(file) if Path(file).is_file() else file.glob('*') for file in args.data ]
+    for file in files:
+        fp = Path(file)
+        if fp.is_dir():
+            for file_type in RDF_FILE_ENDINGS.keys():
+                files_list.extend([file for file in fp.glob('*' + file_type)])
+        elif fp.is_file():
+            files_list.append(fp)
+    return files_list

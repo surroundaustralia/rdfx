@@ -1,21 +1,21 @@
-from sys import path
-path.append("..")
 from pathlib import Path
-from rdflib.namespace import RDF
-from rdflib import Namespace
-SDO = Namespace("https://schema.org/")
+import unittest
+from pathlib import Path
+
+from rdfx.persistence_systems import File
 
 
-def test_merge_different_filetypes():
-    from rdfx.rdfx import merge
+class MergeTests(unittest.TestCase):
 
-    files = []
-    for f in Path(Path(__file__).parent / "data").glob("*.*"):
-        files.append(f)
+    def test_merge_different_filetypes(self):
+        from rdfx.rdfx import merge
 
-    g = merge(files)
-    people = 0
-    for s in g.subjects(predicate=RDF.type, object=SDO.Person):
-        people += 1
-
-    assert people == 3
+        output_format = 'turtle'
+        input_dir = Path(Path(__file__).parent / "data")
+        files = [file for file in input_dir.glob("*.*")]
+        output_file = input_dir/f'merged.{output_format}'
+        ps = File(output_file, output_format)
+        merge(files, ps)
+        self.assertTrue(output_file.exists())
+        # delete the file
+        output_file.unlink()

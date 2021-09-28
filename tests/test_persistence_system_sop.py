@@ -1,9 +1,7 @@
-from rdflib import Graph
 import os
-from sys import path
-path.append("..")
 from rdfx.persistence_systems import SOP
-from rdfx.persistence_systems import PersistenceSystem
+import json
+from rdflib import Graph
 
 g = Graph().parse(
     data="""
@@ -13,35 +11,27 @@ g = Graph().parse(
     format="turtle"
 )
 
-sop = SOP(
-    os.getenv("SOP_SYSTEM_IRI"),
-    "http://example.com/testgraph",
-    os.getenv("SOP_USERNAME"),
-    os.getenv("SOP_PASSWORD"),
-)
-print(issubclass(type(sop), PersistenceSystem))
+workflow_graph = "urn:x-evn-tag:wa_licensed_surveyors_act_1909____06_a0_03_:basic_workflow___administrator_on_2021_09_24_16_32_50:Administrator"
+queryable_graph = "http://topbraid.org/examples/kennedys"
 
-# print(sop.persist(g).status_code)
+# TODO complete test once a dev endpoint is available
+# def test_sop_persist():
+#     sop = SOP(
+#         os.getenv("SOP_SYSTEM_IRI", "http://localhost:8083"),
+#         os.getenv("SOP_NAMED_GRAPH", workflow_graph),
+#         os.getenv("SOP_USERNAME", ""),
+#         os.getenv("SOP_PASSWORD", ""),
+#     )
+#     results = sop.persist(g)
 
-"""
-# possible test 
-
-SELECT DISTINCT ?g
-WHERE {
-  GRAPH ?g {
-    ?s ?p ?o 
-  }
-  
-  FILTER(CONTAINS(STR(?g), "testgraph"))
-}
-
-
-
-INSERT DATA {
-  GRAPH <http://example.com/testgraph> {
-    <a:> <b:> <c:> .
-    <a:> <d:> <e:> . 
-  }
-}
-
-"""
+def test_sop_query():
+    query = """SELECT * { ?s ?p ?o } LIMIT 10"""
+    sop = SOP(
+        os.getenv("SOP_SYSTEM_IRI", "http://localhost:8083"),
+        os.getenv("SOP_NAMED_GRAPH", queryable_graph),
+        os.getenv("SOP_USERNAME", ""),
+        os.getenv("SOP_PASSWORD", ""),
+    )
+    results = json.loads(sop.query(query).text)["results"]["bindings"]
+    # simply validating we are getting results back at this point
+    assert len(results) == 10

@@ -333,10 +333,43 @@ class SOP(PersistenceSystem):
         self.password = password
 
     def persist(self, g: Graph):
+        # prepare the INSERT query
+        session = self._create_session()
+        with warnings.catch_warnings():
+            warnings.simplefilter(
+                "ignore"
+                )  # ignore the rdflib NT serializer warning
+            q = "INSERT DATA {\n" + g.serialize(format="nt") + "\n}"
+
+        response = session.post(
+            self.system_iri + "/sparql",
+            data={"update": q, "using-graph-uri": self.graph_iri},
+            headers={"Accept": "application/sparql-results+json"},
+            )
+
+        # force logout of session
+        session.get(self.system_iri + "/purgeuser?app=edg")
+        return response
+
+    def query(self, query):
+        # prepare the INSERT query
+        session = self._create_session()
+
+        response = session.post(
+            self.system_iri + "/sparql",
+            data={"query": query, "with-imports": "true", "default-graph-uri": self.graph_iri},
+            headers={"Accept": "application/sparql-results+json"},
+            )
+
+        # force logout of session
+        session.get(self.system_iri + "/purgeuser?app=edg")
+        return response
+
+    def _create_session(self):
         global saved_session_cookies
 
-        if "localhost" not in self.system_iri:
-            self.system_iri += "/edg"
+        # if "localhost" not in self.system_iri:
+        self.system_iri += "/tbl"
 
         with requests.Session() as s:
             s.get(self.system_iri)
@@ -346,32 +379,16 @@ class SOP(PersistenceSystem):
             if reuse_sessions and saved_session_cookies:
                 s.cookies = saved_session_cookies
             else:
-                s.post(
-                    self.system_iri + "/tbl/j_security_check",
+                auth_response = s.post(
+                    self.system_iri + "/j_security_check",
                     data={"j_username": self.username, "j_password": self.password},
                     )
                 # detect success!
                 if reuse_sessions:
                     saved_session_cookies = s.cookies
 
-            # prepare the INSERT query
-            q = ""
-            with warnings.catch_warnings():
-                warnings.simplefilter(
-                    "ignore"
-                    )  # ignore the rdflib NT serializer warning
-                q = "INSERT DATA {\n" + g.serialize(format="nt") + "\n}"
+            return s
 
-            response = s.post(
-                self.system_iri + "/tbl/sparql",
-                data={"update": q, "using-graph-uri": self.graph_iri},
-                headers={"Accept": "application/sparql-results+json"},
-                )
-
-            # force logout of session
-            s.get(self.system_iri + "/tbl/purgeuser?app=edg")
-
-            return response
 
 
 def prepare_files_list(files: Union[str, list, Path]) -> list:

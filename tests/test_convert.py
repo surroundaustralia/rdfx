@@ -14,7 +14,7 @@ class MyTestCase(unittest.TestCase):
 <http://orcid.org/0000-0002-8742-7730> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
 
 """
-        input_file = Path('data/merge_01.ttl')
+        input_file = Path('data/file_01.ttl')
         output_format = 'nt'
         output_file = Path(f'./converted.{output_format}')
         ps = File(output_file, output_format)
@@ -43,7 +43,7 @@ class MyTestCase(unittest.TestCase):
     sdo:name "Nicholas J. Car" .
 
 """
-        input_file = Path('data/merge_01.ttl')
+        input_file = Path('data/file_01.ttl')
         output_format = 'turtle'
         output_file = Path(f'./converted.{output_format}')
         leading_comments = ['test comment one', 'test comment two']

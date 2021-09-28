@@ -10,7 +10,7 @@ from io import BytesIO
 import logging
 from http import HTTPStatus
 
-RDF_FORMATS = Literal["turtle", "xml", "json-ld", "nt", "n3"]
+RDF_FORMATS = Literal["ttl", "turtle", "xml", "json-ld", "nt", "n3"]
 RDF_FILE_ENDINGS = {
     "ttl": "turtle",
     "turtle": "turtle",

@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 import unittest
 from rdfx.persistence_systems import *
 
-g = Graph().parse('data/merge_01.ttl')
+g = Graph().parse('data/file_01.ttl')
 
 reference_string_1 = """@prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix sdo: <https://schema.org/> .
@@ -86,20 +86,20 @@ class GenericTests(unittest.TestCase):
             File('.', invalid_type)
 
     def test_prepare_files_list_from_string(self):
-        output = prepare_files_list('data/merge_01.ttl')
-        assert output == [Path('data/merge_01.ttl')]
+        output = prepare_files_list('data/file_01.ttl')
+        assert output == [Path('data/file_01.ttl')]
 
     def test_prepare_files_list_from_path(self):
-        output_path = Path('data/merge_01.ttl')
-        output = prepare_files_list('data/merge_01.ttl')
+        output_path = Path('data/file_01.ttl')
+        output = prepare_files_list('data/file_01.ttl')
         assert output == [output_path]
 
     def test_prepare_files_list_from_dir_str(self):
-        expected_output = [Path('data/merge_01.ttl'), Path('data/merge_03.json-ld'), Path('data/merge_02.rdf')]
+        expected_output = [Path('data/file_01.ttl'), Path('data/file_03.json-ld'), Path('data/file_02.rdf')]
         output = prepare_files_list('data')
         assert output == expected_output
 
     def test_prepare_files_list_from_dir_path(self):
-        expected_output = [Path('data/merge_01.ttl'), Path('data/merge_03.json-ld'), Path('data/merge_02.rdf')]
+        expected_output = [Path('data/file_01.ttl'), Path('data/file_03.json-ld'), Path('data/file_02.rdf')]
         output = prepare_files_list(Path('data'))
         assert output == expected_output

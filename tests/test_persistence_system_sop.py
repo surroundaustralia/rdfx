@@ -1,7 +1,9 @@
-import os
-from rdfx.persistence_systems import SOP
 import json
+import os
+
 from rdflib import Graph
+
+from rdfx.persistence_systems import SOP
 
 g = Graph().parse(
     data="""

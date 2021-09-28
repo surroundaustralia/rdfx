@@ -1,9 +1,11 @@
+import botocore
+import pytest
 import rdflib
 from moto import mock_s3
 from rdflib import Graph
-import botocore
+
 from rdfx.persistence_systems import S3
-import pytest
+
 g = Graph().parse(
     data="""
     <a:> <b:> <c:> .

@@ -1,10 +1,8 @@
-import sys
-from os import path
-import glob
-from rdflib import Graph, util
 import argparse
-from pathlib import Path
-import json
+import sys
+
+from rdflib import util
+
 from persistence_systems import *
 
 RDF_FILE_ENDINGS = {
@@ -18,7 +16,7 @@ RDF_FILE_ENDINGS = {
     "rdf": "xml",
     "nt": "nt",
     "n3": "n3",
-    }
+}
 
 OUTPUT_FILE_ENDINGS = {
     "turtle": "ttl",
@@ -26,22 +24,19 @@ OUTPUT_FILE_ENDINGS = {
     "json-ld": "json-ld",
     "nt": "nt",
     "n3": "n3",
-    }
+}
 
 
 def get_input_format(file_path):
     input_format = util.guess_format(str(file_path))
     if input_format is None:
         str_path = str(file_path)
-        if (
-                str_path.endswith("json-ld")
-                or str_path.endswith("jsonld")
-        ):
+        if str_path.endswith("json-ld") or str_path.endswith("jsonld"):
             input_format = "json-ld"
         else:
             raise Exception(
                 "ERROR: Cannot guess the RDF format of input file {}".format(file_path)
-                )
+            )
 
     return input_format
 
@@ -74,7 +69,7 @@ def merge(rdf_files: List[Path], persistence_system) -> Graph:
         if not f.name.endswith(tuple(RDF_FILE_ENDINGS.keys())):
             raise ValueError(
                 f"Files to be merged must have a known RDF suffix (one of {', '.join(RDF_FILE_ENDINGS)})"
-                )
+            )
 
     g = Graph()
     for f in rdf_files:
@@ -86,7 +81,7 @@ def persist_to(persistence_system: PersistenceSystem, g: Graph):
     if not issubclass(type(persistence_system), PersistenceSystem):
         return ValueError(
             f"You must select of the the subclasses of PersistenceSystem to use for the persistence_system argument"
-            )
+        )
     else:
         persistence_system.persist(g)
 
@@ -95,7 +90,7 @@ if __name__ == "__main__":
     if "-h" not in sys.argv and len(sys.argv) < 3:
         print(
             "ERROR: You must supply at a minimum the method (convert or merge), a file or files, and a target format"
-            )
+        )
         exit()
 
     parser = argparse.ArgumentParser()
@@ -103,11 +98,8 @@ if __name__ == "__main__":
     parser.add_argument("method", choices=("convert", "merge"))
 
     parser.add_argument(
-        "data",
-        nargs='+',
-        type=str,
-        help="Path to the RDF file or directory of files"
-        )
+        "data", nargs="+", type=str, help="Path to the RDF file or directory of files"
+    )
 
     parser.add_argument(
         "--format",
@@ -115,18 +107,18 @@ if __name__ == "__main__":
         type=str,
         help="The RDFlib token for the RDF format you want to convert the RDF file to.",
         choices=RDF_FILE_ENDINGS.keys(),
-        )
+    )
 
     parser.add_argument(
-        '-o',
-        '--output',
-        help='if set, the output location for merged or converted files, defaults to the current working directory',
+        "-o",
+        "--output",
+        help="if set, the output location for merged or converted files, defaults to the current working directory",
         type=str,
-        )
+    )
 
     parser.add_argument(
         "--comments", type=str, help="Comments to prepend to the RDF, turtle only."
-        )
+    )
 
     args = parser.parse_args()
 
@@ -141,7 +133,7 @@ if __name__ == "__main__":
             file_path=(output_loc / f"merged.{args.format}").resolve(),
             rdf_format=args.format,
             leading_comments=args.comments,
-            )
+        )
         merge(files_list, ps)
 
     if args.method == "convert":
@@ -151,5 +143,5 @@ if __name__ == "__main__":
                 file_path=output_loc / Path(file).with_suffix("." + args.format).name,
                 rdf_format=args.format,
                 leading_comments=args.comments,
-                )
+            )
             convert(file, ps)

@@ -331,29 +331,26 @@ class SOP(PersistenceSystem):
         self.graph_iri = graph_iri
         self.username = username
         self.password = password
+        self.session = None
 
     def persist(self, g: Graph):
-        # prepare the INSERT query
-        session = self._create_session()
+        if not self.session:
+            self._create_session()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")  # ignore the rdflib NT serializer warning
-            q = "INSERT DATA {\n" + g.serialize(format="nt") + "\n}"
+            content = "INSERT DATA {\n" + g.serialize(format="nt") + "\n}"
 
-        response = session.post(
+        response = self.session.post(
             self.system_iri + "/sparql",
-            data={"update": q, "using-graph-uri": self.graph_iri},
-            headers={"Accept": "application/sparql-results+json"},
+            data={"update": content, "using-graph-uri": self.graph_iri},
             )
-
-        # force logout of session
-        session.get(self.system_iri + "/purgeuser?app=edg")
         return response
 
     def query(self, query, return_format: Optional[str] = "application/sparql-results+json"):
-        # prepare the INSERT query
-        session = self._create_session()
+        if not self.session:
+            self._create_session()
 
-        response = session.post(
+        response = self.session.post(
             self.system_iri + "/sparql",
             data={
                 "query": query,
@@ -362,34 +359,21 @@ class SOP(PersistenceSystem):
                 },
             headers={"Accept": return_format},
             )
-
-        # force logout of session
-        session.get(self.system_iri + "/purgeuser?app=edg")
         return response
 
+    def close(self):
+        self.session.get(self.system_iri + "/purgeuser?app=edg")
+
     def _create_session(self):
-        global saved_session_cookies
-
-        # if "localhost" not in self.system_iri:
         self.system_iri += "/tbl"
-
         with requests.Session() as s:
             s.get(self.system_iri)
-            reuse_sessions = False
+            auth_response = s.post(
+                self.system_iri + "/j_security_check",
+                data={"j_username": self.username, "j_password": self.password},
+                )
+            self.session = s
 
-            # should be able to check the response contains
-            if reuse_sessions and saved_session_cookies:
-                s.cookies = saved_session_cookies
-            else:
-                auth_response = s.post(
-                    self.system_iri + "/j_security_check",
-                    data={"j_username": self.username, "j_password": self.password},
-                    )
-                # detect success!
-                if reuse_sessions:
-                    saved_session_cookies = s.cookies
-
-            return s
 
 
 def prepare_files_list(files: Union[str, list, Path]) -> list:

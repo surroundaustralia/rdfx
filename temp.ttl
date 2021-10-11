@@ -1,0 +1,93 @@
+# baseURI: https://data.surroundaustralia.com/dataset/document/vic-cad-sur-dir-2018
+
+PREFIX : <https://w3id.org/profile/ogcldapi/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prof: <http://www.w3.org/ns/dx/prof/>
+PREFIX role: <http://www.w3.org/ns/dx/prof/role/>
+PREFIX sdo: <https://schema.org/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+
+<https://w3id.org/profile/ogcldapi>
+    a prof:Profile ;
+    skos:prefLabel "OGC LD API Profile"@en ;
+    dcterms:created "2021-06-10"^^xsd:date ;
+    dcterms:creator <http://orcid.org/0000-0002-8742-7730> ;
+    dcterms:contributor <https://orcid.org/0000-0002-3322-1868> ;
+    dcterms:modified "2021-06-10"^^xsd:date ;
+    dcterms:publisher <https://linked.data.gov.au/org/surround> ;
+    skos:definition "This profile specifies rules that [RDF](https://www.w3.org/RDF/) data must adhere to, to be fit for use with instances of the OGC LD API tool. It also provides machine-readable data validators." ;
+    prof:hasResource
+    [
+        skos:prefLabel "Specification"@en ;
+        dcterms:description "This profile's specification that provides its normative rules."@en ;
+        dcterms:conformsTo <https://www.w3.org/TR/> ;
+        dcterms:format "text/html" ;
+        prof:hasRole role:specification ;
+        prof:hasArtifact "https://w3id.org/profile/ogcldapi/spec"^^xsd:anyURI ;
+    ] ,
+    [
+        skos:prefLabel "Validator"@en ;
+        dcterms:description "A SHACL validator Shape file implementing the specification's rules"@en ;
+        dcterms:conformsTo <https://www.w3.org/TR/shacl/> ;
+        dcterms:format "text/turtle" ;
+        prof:hasRole role:validation ;
+        prof:hasArtifact "https://w3id.org/profile/ogcldapi/validator"^^xsd:anyURI ;
+    ] ,
+    [
+        skos:prefLabel "Labeling Ontologies"@en ;
+        skos:definition "A list of persistent identifiers for ontologies, elements of which are commonly used by OGC LD API data used to assit with property labeling in API data presentation."@en ;
+        dcterms:format "text/uri-list" ;
+        prof:hasRole role:vocabulary ;
+        prof:hasArtifact "https://w3id.org/profile/ogcldapi/labeling-ontologies"^^xsd:anyURI ;
+    ] ,
+    [
+        skos:prefLabel "Labeling Vocabulary"@en ;
+        skos:definition "A vocabulary contains annotated classes, properties and other Semantic Web elements from ontologies that are commonly seen in OGC LD API data used to assit with property labeling in API data presentation."@en ;
+        dcterms:format "text/turtle" ;
+        prof:hasRole role:vocabulary ;
+        prof:hasArtifact "https://w3id.org/profile/ogcldapi/labeling-vocabulary"^^xsd:anyURI ;
+    ] ,
+    [
+        skos:prefLabel "Label Builder script"@en ;
+        skos:definition "A SPARQL script that builds, via a CONSTRUCT query, rdfs:label predicates from dcterms:title, sdo:name and skos:prefLabel predicates. Assists with API labeling"@en ;
+        dcterms:conformsTo <https://www.w3.org/TR/sparql11-update/> ;
+        prof:hasRole role:script ;
+        prof:hasArtifact "https://w3id.org/profile/ogcldapi/label-builder"^^xsd:anyURI ;
+    ] ,
+    [
+        skos:prefLabel "Profile Code Repository"@en ;
+        skos:definition "An online version control repository storing all the content of this profile"@en ;
+        prof:hasArtifact :repo ;
+        prof:hasRole role:repository ;
+        prof:hasArtifact "https://w3id.org/profile/ogcldapi/repo"^^xsd:anyURI ;
+    ] ,
+    [
+        skos:prefLabel "Profile Code Repository README"@en ;
+        skos:definition "An informal guidance document explaining parts of this profile and how to use them"@en ;
+        prof:hasRole role:guidance ;
+        prof:hasArtifact "https://w3id.org/profile/ogcldapi/guidance"^^xsd:anyURI ;
+    ] ;
+    prof:isProfileOf <https://www.w3.org/TR/vocab-dcat/> , <http://www.opengis.net/def/geosparql> ;
+.
+
+<http://orcid.org/0000-0002-8742-7730>
+    a sdo:Person ;
+    sdo:name "Nicholas J Car" ;
+    sdo:email "nicholas.car@surroundaustralia.com"^^xsd:anyURI ;
+    sdo:affiliation <https://linked.data.gov.au/org/surround> ;
+.
+
+<https://orcid.org/0000-0002-3322-1868>
+    a sdo:Person ;
+    sdo:name "David Habgood" ;
+    sdo:email "david.habgood@surroundaustralia.com"^^xsd:anyURI ;
+    sdo:affiliation <https://linked.data.gov.au/org/surround> ;
+.
+
+<https://linked.data.gov.au/org/surround>
+    a sdo:Organization ;
+    sdo:name "SURROUND Australia Pty Ltd" ;
+    sdo:url "https://surroundaustralia.com"^^xsd:anyURI ;
+.

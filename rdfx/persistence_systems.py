@@ -45,7 +45,7 @@ class PersistenceSystem(ABC):
     @staticmethod
     def leading_comment_validator(leading_comments, rdf_format):
         if leading_comments is not None:
-            if rdf_format != "turtle":
+            if rdf_format not in ("turtle", "ttl"):
                 raise ValueError(
                     f"If leading_comments is provided, rdf_format must be turtle"
                 )
@@ -207,7 +207,7 @@ class S3(PersistenceSystem):
             response = client.put_object(
                 Body=bytes_obj, Bucket=self.bucket, Key=filename
             )
-        if response["ResponseMetadata"]["HTTPStatusCode"] == HTTPStatus.OK:
+        if response.meta.data["ResponseMetadata"]["HTTPStatusCode"] == HTTPStatus.OK:
             return filename
         else:
             response.raise_for_status()

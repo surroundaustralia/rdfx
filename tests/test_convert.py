@@ -4,6 +4,7 @@ from rdfx.persistence_systems import File
 from pathlib import Path
 from io import StringIO, BytesIO
 
+
 class MyTestCase(unittest.TestCase):
     def test_ttl_nt(self):
         expected_output = """<http://orcid.org/0000-0002-8742-7730> <https://schema.org/email> "nicholas.car@surroundaustralia.com"^^<http://www.w3.org/2001/XMLSchema#anyURI> .
@@ -14,9 +15,9 @@ class MyTestCase(unittest.TestCase):
 <http://orcid.org/0000-0002-8742-7730> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
 
 """
-        input_file = Path('data/file_01.ttl')
-        output_format = 'nt'
-        output_file = Path(f'./converted.{output_format}')
+        input_file = Path("data/file_01.ttl")
+        output_format = "nt"
+        output_file = Path(f"./converted.{output_format}")
         ps = File(output_file, output_format)
         convert(input_file, ps)
         # nt is unordered so must use readlines to compare
@@ -43,10 +44,10 @@ class MyTestCase(unittest.TestCase):
     sdo:name "Nicholas J. Car" .
 
 """
-        input_file = Path('data/file_01.ttl')
-        output_format = 'turtle'
-        output_file = Path(f'./converted.{output_format}')
-        leading_comments = ['test comment one', 'test comment two']
+        input_file = Path("data/file_01.ttl")
+        output_format = "turtle"
+        output_file = Path(f"./converted.{output_format}")
+        leading_comments = ["test comment one", "test comment two"]
         ps = File(output_file, output_format, leading_comments)
         convert(input_file, ps)
         assert expected_output == output_file.read_text()
@@ -54,11 +55,11 @@ class MyTestCase(unittest.TestCase):
         output_file.unlink()
 
     def test_dir_conversion(self):
-        input_file = Path('data')
-        for file in input_file.glob('*'):
-            output_format = 'turtle'
-            output_file = Path(f'./converted.{output_format}')
-            leading_comments = ['test comment one', 'test comment two']
+        input_file = Path("data")
+        for file in input_file.glob("*"):
+            output_format = "turtle"
+            output_file = Path(f"./converted.{output_format}")
+            leading_comments = ["test comment one", "test comment two"]
             ps = File(output_file, output_format, leading_comments)
             convert(input_file, ps)
             assert expected_output == output_file.read_text()
@@ -66,5 +67,5 @@ class MyTestCase(unittest.TestCase):
         output_file.unlink()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

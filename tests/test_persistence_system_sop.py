@@ -10,7 +10,7 @@ g = Graph().parse(
     <a:> <b:> <c:> .
     <a:> <d:> <e:> .
     """,
-    format="turtle"
+    format="turtle",
 )
 
 workflow_graph = "urn:x-evn-tag:wa_licensed_surveyors_act_1909____06_a0_03_:basic_workflow___administrator_on_2021_09_24_16_32_50:Administrator"
@@ -25,6 +25,7 @@ queryable_graph = "http://topbraid.org/examples/kennedys"
 #         os.getenv("SOP_PASSWORD", ""),
 #     )
 #     results = sop.persist(g)
+
 
 def test_sop_query():
     query = """SELECT * { ?s ?p ?o } LIMIT 10"""

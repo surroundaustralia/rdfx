@@ -1,5 +1,6 @@
 from setuptools import setup
 
+
 def get_version():
     from pathlib import Path
 
@@ -9,6 +10,7 @@ def get_version():
         for line in file_.readlines():
             if line.startswith("__version__"):
                 return line.split('"')[1]
+
 
 setup(
     name="rdfx",

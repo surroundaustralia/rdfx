@@ -130,7 +130,7 @@ if __name__ == "__main__":
     if args.method == "merge":
         files_list = prepare_files_list(args.data)
         ps = File(
-            file_path=(output_loc / f"merged.{args.format}").resolve(),
+            directory=(output_loc / f"merged.{args.format}").resolve(),
             rdf_format=args.format,
             leading_comments=args.comments,
         )
@@ -140,7 +140,7 @@ if __name__ == "__main__":
         files_list = prepare_files_list(args.data)
         for file in files_list:
             ps = File(
-                file_path=output_loc / Path(file).with_suffix("." + args.format).name,
+                directory=output_loc / Path(file).with_suffix("." + args.format).name,
                 rdf_format=args.format,
                 leading_comments=args.comments,
             )

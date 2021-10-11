@@ -7,11 +7,12 @@ CHANGELOG:
 """
 import logging
 from typing import get_args
+
 logging.basicConfig(level=logging.INFO)
 import pytest
 from rdfx.persistence_systems import *
 
-g = Graph().parse('data/file_01.ttl')
+g = Graph().parse("data/file_01.ttl")
 
 reference_string_1 = """@prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix sdo: <https://schema.org/> .
@@ -62,43 +63,65 @@ def test_generate_string_ttl():
     generated_string = generate_string(g, rdf_format="turtle", leading_comments=None)
     assert reference_string_1 == generated_string
 
-def test_generate_string_ttl_with_comment(self, rdf_format="turtle", leading_comments=None):
-    generated_string = generate_string(g, rdf_format="turtle", leading_comments=[ref_comment_1])
+
+def test_generate_string_ttl_with_comment(
+    self, rdf_format="turtle", leading_comments=None
+):
+    generated_string = generate_string(
+        g, rdf_format="turtle", leading_comments=[ref_comment_1]
+    )
     assert reference_string_2 == generated_string
 
+
 def test_generate_string_ttl_with_two_comments():
-    generated_string = generate_string(g, rdf_format="turtle", leading_comments=[ref_comment_1, ref_comment_2])
+    generated_string = generate_string(
+        g, rdf_format="turtle", leading_comments=[ref_comment_1, ref_comment_2]
+    )
     assert reference_string_3 == generated_string
+
 
 def test_valid_types():
     # this test is (almost) redundant as it reads from the list of valid RDF formats
     allowed_types = get_args(RDF_FORMATS)
     for a_type in allowed_types:
         try:
-            File('.', a_type)
+            File(".", a_type)
         except ValueError:
             raise
 
+
 def test_invalid_types():
-    invalid_type = 'ttl'
+    invalid_type = "ttl"
     with pytest.raises(ValueError):
-        File('.', invalid_type)
+        File(".", invalid_type)
+
 
 def test_prepare_files_list_from_string():
-    output = prepare_files_list('data/file_01.ttl')
-    assert output == [Path('data/file_01.ttl')]
+    output = prepare_files_list("data/file_01.ttl")
+    assert output == [Path("data/file_01.ttl")]
+
 
 def test_prepare_files_list_from_path():
-    output_path = Path('data/file_01.ttl')
-    output = prepare_files_list('data/file_01.ttl')
+    output_path = Path("data/file_01.ttl")
+    output = prepare_files_list("data/file_01.ttl")
     assert output == [output_path]
 
+
 def test_prepare_files_list_from_dir_str():
-    expected_output = [Path('data/file_01.ttl'), Path('data/file_03.json-ld'), Path('data/file_02.rdf')]
-    output = prepare_files_list('data')
+    expected_output = [
+        Path("data/file_01.ttl"),
+        Path("data/file_03.json-ld"),
+        Path("data/file_02.rdf"),
+    ]
+    output = prepare_files_list("data")
     assert output == expected_output
 
+
 def test_prepare_files_list_from_dir_path():
-    expected_output = [Path('data/file_01.ttl'), Path('data/file_03.json-ld'), Path('data/file_02.rdf')]
-    output = prepare_files_list(Path('data'))
+    expected_output = [
+        Path("data/file_01.ttl"),
+        Path("data/file_03.json-ld"),
+        Path("data/file_02.rdf"),
+    ]
+    output = prepare_files_list(Path("data"))
     assert output == expected_output

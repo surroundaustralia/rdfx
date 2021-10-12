@@ -127,7 +127,7 @@ class File(PersistenceSystem):
         self,
         g: Graph,
         filename: str,
-        rdf_format: RDF_FORMATS = "turtle",
+        rdf_format: RDF_FORMATS = "ttl",
         leading_comments: Optional = None,
     ):
 
@@ -175,9 +175,10 @@ class S3(PersistenceSystem):
         self,
         g: Graph,
         filename: str,
-        rdf_format: RDF_FORMATS = "turtle",
+        rdf_format: RDF_FORMATS = "ttl",
         leading_comments: Optional = None,
     ):
+        filename = f"{filename}.{rdf_format}"
         s = self.generate_string(g, rdf_format, leading_comments)
         bytes_obj = BytesIO(s.encode("utf-8"))
         try:
@@ -190,24 +191,11 @@ class S3(PersistenceSystem):
             "aws_secret_access_key": self.aws_secret,
             "region_name": self.region,
         }
-        s3 = boto3.resource(*args, **kwargs)
-        bucket = s3.Bucket(self.bucket)
-        # try to put the object - this will fail if the bucket doesn't exist (or credential errors etc.)
-        try:
-            response = bucket.put_object(
-                Body=bytes_obj, Bucket=self.bucket, Key=filename
-            )
-        except botocore.errorfactory.ClientError as e:
-            logging.info(
-                f"ClientError {e}. Assuming Bucket does not exist and creating it"
-            )
-            client = boto3.client(*args, **kwargs)
-            location = {"LocationConstraint": self.region}
-            client.create_bucket(Bucket=self.bucket, CreateBucketConfiguration=location)
-            response = client.put_object(
-                Body=bytes_obj, Bucket=self.bucket, Key=filename
-            )
-        if response.meta.data["ResponseMetadata"]["HTTPStatusCode"] == HTTPStatus.OK:
+        client = boto3.client(*args, **kwargs)
+        response = client.put_object(
+            Body=bytes_obj, Bucket=self.bucket, Key=filename
+        )
+        if response["ResponseMetadata"]["HTTPStatusCode"] == HTTPStatus.OK:
             return filename
         else:
             response.raise_for_status()

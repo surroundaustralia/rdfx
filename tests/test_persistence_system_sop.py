@@ -1,6 +1,6 @@
 import json
 import os
-
+import uuid
 from rdflib import Graph
 
 from rdfx.persistence_systems import SOP
@@ -26,15 +26,45 @@ queryable_graph = "http://topbraid.org/examples/kennedys"
 #     )
 #     results = sop.persist(g)
 
+remote_sop_ps = SOP(
+    os.getenv("SOP_SYSTEM_IRI", "http://localhost:8083"),
+    os.getenv("SOP_USERNAME", ""),
+    os.getenv("SOP_PASSWORD", ""),
+    )
+
+local_sop_ps = SOP("http://localhost:8083")
+existing_local_master_graph = "urn:x-evn-master:mysmallgraph"
+new_local_workflow = f"{uuid.uuid4()}:Administrator"
 
 def test_sop_query():
-    query = """SELECT * { ?s ?p ?o } LIMIT 10"""
-    sop = SOP(
-        os.getenv("SOP_SYSTEM_IRI", "http://localhost:8083"),
-        os.getenv("SOP_NAMED_GRAPH", queryable_graph),
-        os.getenv("SOP_USERNAME", ""),
-        os.getenv("SOP_PASSWORD", ""),
-    )
-    results = json.loads(sop.query(query).text)["results"]["bindings"]
+    query = "SELECT * { ?s ?p ?o } LIMIT 10"
+    results = json.loads(remote_sop_ps.query(query, queryable_graph).text)["results"]["bindings"]
     # simply validating we are getting results back at this point
     assert len(results) == 10
+
+def test_sop_persist():
+    insert_response = local_sop_ps.persist(g, existing_local_master_graph)
+    assert insert_response.reason == 'OK'
+
+def test_sop_workflow_creation():
+    workflow_graph_iri = local_sop_ps.create_workflow(graph_iri=existing_local_master_graph,
+                                                      workflow_name=new_local_workflow)
+    # method should raise any exceptions prior to getting a response
+    assert workflow_graph_iri
+
+    # try to insert something in to the graph
+    insert_response = local_sop_ps.persist(g, workflow_graph_iri)
+    assert insert_response.reason == 'OK'
+
+    # check the triples have been inserted in to the new workflow
+    query = f"""
+    SELECT (COUNT(*) as ?count)
+        WHERE {{ 
+          GRAPH <{workflow_graph_iri}>
+          {{ ?s ?p ?o . }}
+          FILTER NOT EXISTS {{ GRAPH <{existing_local_master_graph}> {{?s ?p ?o}} }}
+        }}"""
+    query_response = local_sop_ps.query(query, workflow_graph_iri)
+    response_dict = json.loads(query_response.text)
+    assert response_dict["results"]["bindings"][0]["count"]["value"] == '2'
+

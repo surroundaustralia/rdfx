@@ -31,7 +31,11 @@ class PersistenceSystem(ABC):
         pass
 
     @abstractmethod
-    def persist(self, g: Graph, rdf_format, leading_comments, *args):
+    def persist(self,
+                g: Graph,
+                rdf_format,
+                leading_comments,
+                *args):
         """
         Persists the given Graph in the form implemented by this Persistence System
 
@@ -44,7 +48,9 @@ class PersistenceSystem(ABC):
         pass
 
     @staticmethod
-    def leading_comment_validator(leading_comments, rdf_format):
+    def leading_comment_validator(
+            leading_comments,
+            rdf_format):
         if leading_comments is not None:
             if rdf_format not in ("turtle", "ttl"):
                 raise ValueError(
@@ -56,7 +62,8 @@ class PersistenceSystem(ABC):
                     )
 
     @staticmethod
-    def rdf_format_validator(rdf_format):
+    def rdf_format_validator(
+            rdf_format):
         if rdf_format not in RDF_FORMATS.__init__("__args__"):
             raise ValueError(
                 f"The RDF format selected must be one of {', '.join(RDF_FORMATS.__init__('__args__'))}"

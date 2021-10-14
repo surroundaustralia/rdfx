@@ -1,9 +1,8 @@
 import argparse
 import sys
 
-from rdflib import util
-
 from persistence_systems import *
+from rdflib import util
 
 RDF_FILE_ENDINGS = {
     "ttl": "turtle",

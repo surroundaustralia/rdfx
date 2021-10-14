@@ -10,6 +10,7 @@ from typing import get_args
 
 logging.basicConfig(level=logging.INFO)
 import pytest
+
 from rdfx.persistence_systems import *
 
 g = Graph().parse("data/file_01.ttl")

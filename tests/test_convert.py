@@ -1,8 +1,9 @@
 import unittest
-from rdfx.rdfx import convert
-from rdfx.persistence_systems import File
+from io import BytesIO, StringIO
 from pathlib import Path
-from io import StringIO, BytesIO
+
+from rdfx.persistence_systems import File
+from rdfx.rdfx import convert
 
 
 class MyTestCase(unittest.TestCase):

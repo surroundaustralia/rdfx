@@ -1,7 +1,7 @@
 from pathlib import Path
-from rdfx.rdfx import merge
 
 from rdfx.persistence_systems import File
+from rdfx.rdfx import merge
 
 
 def test_merge_directory():

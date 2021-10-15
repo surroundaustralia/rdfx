@@ -52,4 +52,3 @@ jobs:
         run: |
           source .venv/bin/activate
           poetry run pytest tests/ --ignore=tests/test_persistence_system_sop.py
-          coverage report

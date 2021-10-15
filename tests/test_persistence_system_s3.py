@@ -4,7 +4,7 @@ import rdflib
 from moto import mock_s3
 from rdflib import Graph
 
-from rdfx.persistence_systems import S3
+from src.persistence_systems import S3
 
 g = Graph().parse(
     data="""

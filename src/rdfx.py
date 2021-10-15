@@ -1,8 +1,9 @@
 import argparse
 import sys
 
-from persistence_systems import *
 from rdflib import util
+
+from persistence_systems import *
 
 RDF_FILE_ENDINGS = {
     "ttl": "turtle",
@@ -53,10 +54,16 @@ def make_output_file_path(input_file_path, input_format, output_format, in_place
     return output_path
 
 
-def convert(input_file_path, persistence_system):
+def convert(
+    input_file_path: Path,
+    persistence_system,
+    output_filename: str,
+    output_format: str,
+    comments: str,
+):
     input_format = get_input_format(input_file_path)
     g = Graph().parse(str(input_file_path), format=input_format)
-    persistence_system.persist(g)
+    persistence_system.persist(g, output_filename, output_format, comments)
 
 
 def merge(rdf_files: List[Path], persistence_system) -> Graph:
@@ -136,11 +143,10 @@ if __name__ == "__main__":
         merge(files_list, ps)
 
     if args.method == "convert":
+        ps = File(directory=output_loc)
+        rdf_format = args.format
+        leading_comments = args.comments
         files_list = prepare_files_list(args.data)
         for file in files_list:
-            ps = File(
-                directory=output_loc / Path(file).with_suffix("." + args.format).name,
-                rdf_format=args.format,
-                leading_comments=args.comments,
-            )
-            convert(file, ps)
+            output_filename = Path(file).stem
+            convert(file, ps, output_filename, rdf_format, leading_comments)

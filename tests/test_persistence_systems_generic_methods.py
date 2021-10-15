@@ -1,5 +1,5 @@
 """
-This Python 3.8 code tests the generic functions in ``rdfx/persistence_systems.py``
+This Python 3.8 code tests the generic functions in ``src/persistence_systems.py``
 Beware, these tests cover only some functions and only some scenarios.
 Keep adding tests!
 CHANGELOG:
@@ -11,9 +11,9 @@ from typing import get_args
 logging.basicConfig(level=logging.INFO)
 import pytest
 
-from rdfx.persistence_systems import *
+from src.persistence_systems import *
 
-g = Graph().parse("data/file_01.ttl")
+g = Graph().parse("src/tests/data/file_01.ttl")
 
 reference_string_1 = """@prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix sdo: <https://schema.org/> .

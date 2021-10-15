@@ -4,7 +4,7 @@ from setuptools import setup
 def get_version():
     from pathlib import Path
 
-    init_path = Path("rdfx/__init__.py")
+    init_path = Path("src/__init__.py")
 
     with init_path.open() as file_:
         for line in file_.readlines():
@@ -13,7 +13,7 @@ def get_version():
 
 
 setup(
-    name="rdfx",
+    name="src",
     version=get_version(),
     description="Tools for converting, merging, persisting and reading RDF data in different formats.",
     long_description=open("README.md", encoding="utf-8").read(),
@@ -24,7 +24,7 @@ setup(
     maintainer_email="david.habgood@surroundaustralia.com",
     url="https://github.com/surroundaustralia/rdfx",
     license="BSD",
-    packages=["rdfx"],
+    packages=["src"],
     platforms=["any"],
     classifiers=[
         "Programming Language :: Python",

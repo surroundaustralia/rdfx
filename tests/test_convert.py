@@ -2,7 +2,7 @@ import os
 import sys
 
 sys.path.append(os.getcwd() + "/src")
-
+import warnings
 from io import StringIO
 from pathlib import Path
 
@@ -23,7 +23,9 @@ def test_ttl_nt():
     output_format = "nt"
     output_file = Path(f"./converted.{output_format}")
     ps = File(".")
-    convert(input_file, ps, output_file.stem, output_format)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")  # ignore the rdflib NT serializer warning
+        convert(input_file, ps, output_file.stem, output_format)
     # nt is unordered so must use readlines to compare
     output_lines = output_file.open().readlines()
     reference_lines = StringIO(expected_output).readlines()

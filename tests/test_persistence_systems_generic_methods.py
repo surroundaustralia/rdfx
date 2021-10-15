@@ -88,7 +88,11 @@ def test_valid_types():
     allowed_types = get_args(RDF_FORMATS)
     for a_type in allowed_types:
         try:
-            String().persist(Graph(), rdf_format=a_type)
+            with warnings.catch_warnings():
+                warnings.simplefilter(
+                    "ignore"
+                )  # ignore the rdflib NT serializer warning
+                String().persist(Graph(), rdf_format=a_type)
         except ValueError:
             raise
 

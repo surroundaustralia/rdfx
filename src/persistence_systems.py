@@ -351,17 +351,57 @@ class SOP(PersistenceSystem):
 
     def create_datagraph(
         self,
-        name: str,
-        subjectArea: str = None,
-        description: str = None,
+        datagraph_name: str = "",
+        subjectArea: str = "",
+        description: str = "",
         default_namespace: str = None,
-        owl_imports: str = None,
-        spin_imports: str = None,
+        owl_imports: str = "",
+        spin_imports: str = "",
     ):
         """
         Creates a datagraph in SOP
+        :param name:
+        :param subjectArea:
+        :param description:
+        :param default_namespace:
+        :param owl_imports:
+        :param spin_imports:
         :return:
         """
+        if not self.session:
+            self._create_session()
+
+        if not datagraph_name:
+            datagraph_name = f"Python_Created_Datagraph_From_{getpass.getuser()}_at_{datetime.now().isoformat()}"
+
+        # TODO use slugifier instead - though there's no guarantee it will slugify the same as SOP - does this matter?
+        if not default_namespace:
+            default_namespace = f"https://data.surroundaustralia.com/data/{datagraph_name}#".replace(
+                " ", "_"
+            )
+        # prepare the query
+        datagraph_creation_endpoint = self.system_iri + "/swp"
+        headers = {"Cookie": "username=Administrator"}
+        qsa = {
+            "_viewClass": "http://topbraid.org/teamwork#CreateProjectService",
+            "projectType": "http://teamwork.topbraidlive.org/datagraph/datagraphprojects#ProjectType",
+            "subjectArea": subjectArea,
+            "owlImports": owl_imports,
+            "spinImports": spin_imports,
+            "name": datagraph_name,
+            "defaultNamespace": default_namespace,
+            "comment": description,
+        }
+        # send the datagraph creation payload
+        response = self.session.get(
+            datagraph_creation_endpoint,
+            params=qsa,
+            headers=headers,
+            cookies=self.session.cookies,
+        )
+        response_dict = json.loads(response.text)
+        assert response_dict["response"].split()[0] == "Successfully"
+        return response_dict["id"]
 
     def create_workflow(self, graph_iri: str, workflow_name: Optional[str] = None):
         """

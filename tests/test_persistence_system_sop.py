@@ -52,6 +52,17 @@ existing_local_master_graph = "urn:x-evn-master:new_test_datagraph"
 #     assert insert_response.reason == "OK"
 
 
+def test_sop_datagraph_creation():
+    response = local_sop_ps.create_datagraph()
+    created_workflow_iri = f"urn:x-evn-master:{response}"
+
+    # query - confirm an "empty" (8 default triples only) datagraph has been created
+    query = f"""SELECT (COUNT(*) as ?count) WHERE {{GRAPH <{created_workflow_iri}> {{?s ?p ?o}} }}"""
+    query_response = local_sop_ps.query(query, created_workflow_iri)
+    response_dict = json.loads(query_response.text)
+    assert response_dict["results"]["bindings"][0]["count"]["value"] == "8"
+
+
 def test_sop_workflow_creation():
     workflow_graph_iri = local_sop_ps.create_workflow(
         graph_iri=existing_local_master_graph

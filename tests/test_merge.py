@@ -9,8 +9,8 @@ def test_merge_directory():
     input_dir = Path(Path(__file__).parent / "data")
     files = [file for file in input_dir.glob("*.*")]
     output_file = input_dir / f"merged.{output_format}"
-    ps = File(output_file, output_format)
-    merge(files, ps)
+    ps = File(input_dir)
+    merge(files, ps, output_format)
     assert output_file.exists()
     # delete the file
     output_file.unlink()

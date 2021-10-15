@@ -1,4 +1,5 @@
 # Google-style docstrings: https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
+import getpass
 import json
 import warnings
 from abc import ABC, abstractmethod
@@ -64,6 +65,9 @@ class PersistenceSystem(ABC):
 
     @staticmethod
     def generate_string(g, rdf_format, leading_comments):
+        # validate the RDF format - all methods utilise the 'generate_string' static method so this will always be
+        # called
+        # PersistenceSystem.rdf_format_validator(rdf_format)
         if leading_comments is None:
             return g.serialize(format=rdf_format)
         else:
@@ -96,8 +100,7 @@ class String(PersistenceSystem):
         rdf_format: RDF_FORMATS = "turtle",
         leading_comments: Optional = None,
     ):
-        self.validate_format()
-        return self.self.generate_string(g, self.rdf_format, self.leading_comments)
+        return self.generate_string(g, rdf_format, leading_comments)
 
 
 class File(PersistenceSystem):
@@ -346,7 +349,21 @@ class SOP(PersistenceSystem):
         )
         return response
 
-    def create_workflow(self, graph_iri: str, workflow_name: Optional[str]):
+    def create_datagraph(
+        self,
+        name: str,
+        subjectArea: str = None,
+        description: str = None,
+        default_namespace: str = None,
+        owl_imports: str = None,
+        spin_imports: str = None,
+    ):
+        """
+        Creates a datagraph in SOP
+        :return:
+        """
+
+    def create_workflow(self, graph_iri: str, workflow_name: Optional[str] = None):
         """
         :param graph_iri: The graph to add a workflow to
         :param workflow_name: The name of the workflow. If not provided, the current time is used
@@ -356,10 +373,11 @@ class SOP(PersistenceSystem):
             self._create_session()
 
         if not workflow_name:
-            workflow_name = f"WorkflowCreatedAt_{datetime.now().isoformat()}"
+            workflow_name = f"Python_Created_Workflow_From_{getpass.getuser()}_at_{datetime.now().isoformat()}"
 
         # prepare the query
         workflow_creation_endpoint = self.system_iri + "/swp"
+        headers = {"Cookie": "username=Administrator"}
         qsa = {
             "_viewClass": "http://topbraid.org/teamwork#AddTagService",
             "projectGraph": graph_iri,
@@ -368,7 +386,12 @@ class SOP(PersistenceSystem):
             "comment": "",
         }
         # send to SOP
-        response = self.session.get(workflow_creation_endpoint, params=qsa)
+        response = self.session.get(
+            workflow_creation_endpoint,
+            params=qsa,
+            headers=headers,
+            cookies=self.session.cookies,
+        )
         response_dict = json.loads(response.text)
 
         # verify the response, either created, or up

@@ -34,27 +34,27 @@ remote_sop_ps = SOP(
 )
 
 local_sop_ps = SOP("http://localhost:8083")
-existing_local_master_graph = "urn:x-evn-master:mysmallgraph"
-new_local_workflow = f"{uuid.uuid4()}:Administrator"
+existing_local_master_graph = "urn:x-evn-master:new_test_datagraph"
+# new_local_workflow = f"{uuid.uuid4()}:Administrator"
+# new_local_workflow = f"pineapple:Administrator"
 
-
-def test_sop_query():
-    query = "SELECT * { ?s ?p ?o } LIMIT 10"
-    results = json.loads(remote_sop_ps.query(query, queryable_graph).text)["results"][
-        "bindings"
-    ]
-    # simply validating we are getting results back at this point
-    assert len(results) == 10
-
-
-def test_sop_persist():
-    insert_response = local_sop_ps.persist(g, existing_local_master_graph)
-    assert insert_response.reason == "OK"
+# def test_sop_query():
+#     query = "SELECT * { ?s ?p ?o } LIMIT 10"
+#     results = json.loads(remote_sop_ps.query(query, queryable_graph).text)["results"][
+#         "bindings"
+#     ]
+#     # simply validating we are getting results back at this point
+#     assert len(results) == 10
+#
+#
+# def test_sop_persist():
+#     insert_response = local_sop_ps.persist(g, existing_local_master_graph)
+#     assert insert_response.reason == "OK"
 
 
 def test_sop_workflow_creation():
     workflow_graph_iri = local_sop_ps.create_workflow(
-        graph_iri=existing_local_master_graph, workflow_name=new_local_workflow
+        graph_iri=existing_local_master_graph
     )
     # method should raise any exceptions prior to getting a response
     assert workflow_graph_iri

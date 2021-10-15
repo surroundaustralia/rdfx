@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+print(os.getcwd())
 from src.persistence_systems import prepare_files_list
 
 
@@ -14,14 +15,18 @@ def test_convert_1_file():
 
 
 def test_convert_2_file():
-    file_1 = Path("tests/data/file_01.ttl")
-    file_2 = Path("tests/data/file_02.rdf")
+    file_1 = Path("tests/data/file_01.ttl").resolve()
+    file_2 = Path("tests/data/file_02.rdf").resolve()
     output_format = "xml"
     os.system(
         f"python src/rdfx.py convert -f {output_format} -o {str(file_1.parent)} {str(file_1)} {str(file_2)}"
     )
-    file_1.with_suffix(f".{output_format}").unlink()
-    file_2.with_suffix(f".{output_format}").unlink()
+    file_1_converted = file_1.with_suffix(f".{output_format}")
+    file_2_converted = file_2.with_suffix(f".{output_format}")
+    assert file_1_converted.exists()
+    assert file_2_converted.exists()
+    file_1_converted.unlink()
+    file_2_converted.unlink()
 
 
 def test_convert_directory():

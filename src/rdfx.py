@@ -1,9 +1,11 @@
 import argparse
 import sys
+from pathlib import Path
+from typing import List
 
-from rdflib import util
+from rdflib import Graph, util
 
-from persistence_systems import *
+from persistence_systems import File, PersistenceSystem, prepare_files_list
 
 RDF_FILE_ENDINGS = {
     "ttl": "turtle",
@@ -59,14 +61,16 @@ def convert(
     persistence_system,
     output_filename: str,
     output_format: str,
-    comments: str,
+    comments: str = None,
 ):
     input_format = get_input_format(input_file_path)
     g = Graph().parse(str(input_file_path), format=input_format)
     persistence_system.persist(g, output_filename, output_format, comments)
 
 
-def merge(rdf_files: List[Path], persistence_system) -> Graph:
+def merge(
+    rdf_files: List[Path], persistence_system, output_format, output_filename="merged"
+):
     """
     Merges a given set of RDF files into one graph
 
@@ -80,7 +84,7 @@ def merge(rdf_files: List[Path], persistence_system) -> Graph:
     g = Graph()
     for f in rdf_files:
         g.parse(f, format=RDF_FILE_ENDINGS[f.suffix.lstrip(".")])
-    persistence_system.persist(g)
+    persistence_system.persist(g, output_filename, rdf_format=output_format)
 
 
 def persist_to(persistence_system: PersistenceSystem, g: Graph):

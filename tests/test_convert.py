@@ -1,5 +1,9 @@
-import unittest
-from io import BytesIO, StringIO
+import os
+import sys
+
+sys.path.append(os.getcwd() + "/src")
+
+from io import StringIO
 from pathlib import Path
 
 from src.persistence_systems import File
@@ -15,11 +19,11 @@ def test_ttl_nt():
 <http://orcid.org/0000-0002-8742-7730> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
 
 """
-    input_file = Path("data/file_01.ttl")
+    input_file = Path("tests/data/file_01.ttl")
     output_format = "nt"
     output_file = Path(f"./converted.{output_format}")
-    ps = File(output_file, output_format)
-    convert(input_file, ps)
+    ps = File(".")
+    convert(input_file, ps, output_file.stem, output_format)
     # nt is unordered so must use readlines to compare
     output_lines = output_file.open().readlines()
     reference_lines = StringIO(expected_output).readlines()
@@ -38,36 +42,32 @@ def test_ttl_comments():
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <http://orcid.org/0000-0002-8742-7730> a owl:NamedIndividual,
-    sdo:Person ;
-sdo:affiliation <https://surroundaustralia.com> ;
-sdo:email "nicholas.car@surroundaustralia.com"^^xsd:anyURI ;
-sdo:jobTitle "Data Systems Architect" ;
-sdo:name "Nicholas J. Car" .
+        sdo:Person ;
+    sdo:affiliation <https://surroundaustralia.com> ;
+    sdo:email "nicholas.car@surroundaustralia.com"^^xsd:anyURI ;
+    sdo:jobTitle "Data Systems Architect" ;
+    sdo:name "Nicholas J. Car" .
 
 """
-    input_file = Path("data/file_01.ttl")
+    input_file = Path("tests/data/file_01.ttl")
     output_format = "turtle"
     output_file = Path(f"./converted.{output_format}")
     leading_comments = ["test comment one", "test comment two"]
-    ps = File(output_file, output_format, leading_comments)
-    convert(input_file, ps)
+    ps = File(".")
+    convert(input_file, ps, output_file.stem, output_format, leading_comments)
     assert expected_output == output_file.read_text()
     # delete the file
     output_file.unlink()
 
 
-def test_dir_conversion():
-    input_file = Path("data")
-    for file in input_file.glob("*"):
-        output_format = "turtle"
-        output_file = Path(f"./converted.{output_format}")
-        leading_comments = ["test comment one", "test comment two"]
-        ps = File(output_file, output_format, leading_comments)
-        convert(input_file, ps)
-        assert expected_output == output_file.read_text()
-    # delete the file
-    output_file.unlink()
-
-
-if __name__ == "__main__":
-    unittest.main()
+# def test_dir_conversion():
+#     input_file = Path("data")
+#     for file in input_file.glob("*"):
+#         output_format = "turtle"
+#         output_file = Path(f"./converted.{output_format}")
+#         leading_comments = ["test comment one", "test comment two"]
+#         ps = File(output_file, output_format, leading_comments)
+#         convert(input_file, ps)
+#         assert expected_output == output_file.read_text()
+#     # delete the file
+#     output_file.unlink()

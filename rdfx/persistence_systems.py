@@ -451,25 +451,16 @@ class SOP(PersistenceSystem):
         )
         return workflow_graph_iri
 
-    def asset_exists(
-        self,
-        # asset_type: str,
-        asset_name: str,
-    ) -> bool:
-
-        # if asset_type not in ['datagraph', 'workflow']:
-        #     raise ValueError("'asset_type' must be 'datagraph' or 'workflow' - other asset types are not yet "
-        #                      "implemented")
-        #
-        # asset_type_map = {
-        #     'datagraph': 'urn:x-evn-master',
-        #     'workflow': 'urn:x-evn-tag'
-        #     }
-
+    def asset_exists(self, asset_urn: str) -> bool:
+        """
+        Checks whether an asset exists in SOP, returns True or False
+        :param asset_urn: The EDG URN of the asset
+        :return: boolean
+        """
         if not self.session:
             self._create_session()
 
-        query = f"ASK WHERE {{GRAPH <{asset_name}> {{?s ?p ?o}} }}"
+        query = f"ASK WHERE {{GRAPH <{asset_urn}> {{?s ?p ?o}} }}"
         response = self.session.post(
             self.system_iri + "/sparql",
             data={"query": query},

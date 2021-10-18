@@ -468,6 +468,17 @@ class SOP(PersistenceSystem):
         )
         return json.loads(response.text)["boolean"]
 
+    @staticmethod
+    def graph_from_workflow(workflow_graph):
+        if not workflow_graph.startswith("x-evn-tag"):
+            raise ValueError(
+                "The workflow graph passed does not start with 'x-evn-tag' - it does not look like a SOP "
+                "Workflow"
+            )
+        intermediate = workflow_graph.split(":")
+        intermediate[1] = "x-evn-master"
+        return ":".join(intermediate[:3])
+
     def _close(self):
         self.session.get(self.system_iri + "/purgeuser?app=edg")
 

@@ -5,7 +5,7 @@ description = "Tools for converting, merging, persisting and reading RDF data in
 authors = ["david-habgood <david.habgood@surroundaustralia.com>", "nicholas-car <nicholas.car@surroundaustralia.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.8.10"
+python = "^3.8"
 rdflib = "^6.0.2"
 requests = "^2.26.0"
 

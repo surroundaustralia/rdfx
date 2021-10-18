@@ -470,7 +470,7 @@ class SOP(PersistenceSystem):
 
     @staticmethod
     def graph_from_workflow(workflow_graph):
-        if not workflow_graph.startswith("x-evn-tag"):
+        if not workflow_graph.startswith("urn:x-evn-tag"):
             raise ValueError(
                 "The workflow graph passed does not start with 'x-evn-tag' - it does not look like a SOP "
                 "Workflow"

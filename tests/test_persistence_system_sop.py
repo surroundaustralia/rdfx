@@ -53,14 +53,40 @@ existing_local_master_graph = "urn:x-evn-master:new_test_datagraph"
 
 
 def test_sop_datagraph_creation():
-    response = local_sop_ps.create_datagraph()
-    created_workflow_iri = f"urn:x-evn-master:{response}"
+    created_workflow_iri = local_sop_ps.create_datagraph()
 
     # query - confirm an "empty" (8 default triples only) datagraph has been created
     query = f"""SELECT (COUNT(*) as ?count) WHERE {{GRAPH <{created_workflow_iri}> {{?s ?p ?o}} }}"""
     query_response = local_sop_ps.query(query, created_workflow_iri)
     response_dict = json.loads(query_response.text)
     assert response_dict["results"]["bindings"][0]["count"]["value"] == "8"
+
+
+def test_sop_datagraph_exists():
+    graph_to_create = f"datagraph-{uuid.uuid4()}".replace("-", "_")
+    not_created_graph = f"datagraph-{uuid.uuid4()}".replace("-", "_")
+    graph_to_create_name = local_sop_ps.create_datagraph(datagraph_name=graph_to_create)
+    assert local_sop_ps.asset_exists(graph_to_create_name)
+    assert not local_sop_ps.asset_exists(not_created_graph)
+
+
+def test_sop_workflow_exists():
+    workflow_to_create = f"workflow-{uuid.uuid4()}".replace("-", "_")
+    assert not local_sop_ps.asset_exists(workflow_to_create)
+    new_datagraph = local_sop_ps.create_datagraph()
+    workflow_name = local_sop_ps.create_workflow(
+        graph_iri=new_datagraph, workflow_name=workflow_to_create
+    )
+    assert local_sop_ps.asset_exists(workflow_name)
+
+
+def test_sop_duplicate_datagraph_creation():
+    import uuid
+
+    new_graph_name = f"datagraph-{uuid.uuid4()}".replace("-", "_")
+    response_1 = local_sop_ps.create_datagraph(datagraph_name=new_graph_name)
+    response_2 = local_sop_ps.create_datagraph(datagraph_name=new_graph_name)
+    assert response_1 != response_2
 
 
 def test_sop_workflow_creation():

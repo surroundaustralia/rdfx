@@ -401,7 +401,8 @@ class SOP(PersistenceSystem):
         )
         response_dict = json.loads(response.text)
         assert response_dict["response"].split()[0] == "Successfully"
-        return response_dict["id"]
+        workflow_graph_iri = f"urn:x-evn-master:{response_dict['id']}"
+        return workflow_graph_iri
 
     def create_workflow(self, graph_iri: str, workflow_name: Optional[str] = None):
         """
@@ -445,15 +446,42 @@ class SOP(PersistenceSystem):
         else:
             # TODO figure out what would cause the graph to fail to create, and what response is given
             raise Exception("Failed to create workflow graph on SOP")
-        workflow_graph_iri = f"{graph_iri}:{workflow_name}".replace(
+        workflow_graph_iri = f"{graph_iri}:{workflow_name}:Administrator".replace(
             "urn:x-evn-master", "urn:x-evn-tag"
         )
         return workflow_graph_iri
+
+    def asset_exists(
+        self,
+        # asset_type: str,
+        asset_name: str,
+    ) -> bool:
+
+        # if asset_type not in ['datagraph', 'workflow']:
+        #     raise ValueError("'asset_type' must be 'datagraph' or 'workflow' - other asset types are not yet "
+        #                      "implemented")
+        #
+        # asset_type_map = {
+        #     'datagraph': 'urn:x-evn-master',
+        #     'workflow': 'urn:x-evn-tag'
+        #     }
+
+        if not self.session:
+            self._create_session()
+
+        query = f"ASK WHERE {{GRAPH <{asset_name}> {{?s ?p ?o}} }}"
+        response = self.session.post(
+            self.system_iri + "/sparql",
+            data={"query": query},
+            headers={"Accept": "application/sparql-results+json"},
+        )
+        return json.loads(response.text)["boolean"]
 
     def _close(self):
         self.session.get(self.system_iri + "/purgeuser?app=edg")
 
     def _create_session(self):
+
         self.system_iri += "/tbl"
         with requests.Session() as s:
             s.get(self.system_iri)

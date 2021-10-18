@@ -1,11 +1,11 @@
 import argparse
+import os
 import sys
 from pathlib import Path
 from typing import List
 
-from rdflib import Graph, util
-
 from persistence_systems import File, PersistenceSystem, prepare_files_list
+from rdflib import Graph, util
 
 RDF_FILE_ENDINGS = {
     "ttl": "turtle",

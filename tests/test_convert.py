@@ -1,13 +1,13 @@
 import os
 import sys
 
-sys.path.append(os.getcwd() + "/src")
+sys.path.append(os.getcwd() + "/rdfx")
 import warnings
 from io import StringIO
 from pathlib import Path
 
-from src.persistence_systems import File
-from src.rdfx import convert
+from rdfx.persistence_systems import File
+from rdfx.rdfx import convert
 
 
 def test_ttl_nt():

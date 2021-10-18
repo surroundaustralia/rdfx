@@ -2,7 +2,7 @@ from pathlib import Path
 
 from rdflib import Graph
 
-from src.persistence_systems import File
+from rdfx.persistence_systems import File
 
 g = Graph().parse(
     data="""

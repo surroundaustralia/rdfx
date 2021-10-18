@@ -5,7 +5,7 @@ from botocore.exceptions import BotoCoreError
 from moto import mock_s3
 from rdflib import Graph
 
-from src.persistence_systems import S3
+from rdfx.persistence_systems import S3
 
 g = Graph().parse(
     data="""

@@ -4,7 +4,7 @@ import uuid
 
 from rdflib import Graph
 
-from src.persistence_systems import SOP
+from rdfx.persistence_systems import SOP
 
 g = Graph().parse(
     data="""

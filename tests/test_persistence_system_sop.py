@@ -133,3 +133,13 @@ def test_remote_sop_workflow_insert():
     query_response = remote_sop_ps.query(query, workflow_graph_urn)
     response_dict = json.loads(query_response.text)
     assert response_dict["results"]["bindings"][0]["count"]["value"] == "2"
+
+
+def test_asset_size_local():
+    new_datagraph_local = local_sop_ps.create_datagraph()
+    assert local_sop_ps.asset_collection_size(new_datagraph_local) == 8
+
+
+def test_asset_size_remote():
+    new_datagraph_local = remote_sop_ps.create_datagraph()
+    assert remote_sop_ps.asset_collection_size(new_datagraph_local) == 8

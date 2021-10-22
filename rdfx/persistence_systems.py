@@ -367,6 +367,17 @@ class SOP(PersistenceSystem):
         )
         return response
 
+    def asset_collection_size(self, asset_iri):
+        """
+        A wrapper around query to return the size of a given graph
+        :param asset_iri:
+        :return:
+        """
+        query = f"""SELECT (COUNT(*) as ?count) WHERE {{GRAPH <{asset_iri}> {{?s ?p ?o}} }}"""
+        query_response = self.query(query, asset_iri)
+        response_dict = json.loads(query_response.text)
+        return int(response_dict["results"]["bindings"][0]["count"]["value"])
+
     def create_datagraph(
         self,
         datagraph_name: str = "",

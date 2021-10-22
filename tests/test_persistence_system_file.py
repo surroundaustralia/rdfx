@@ -28,10 +28,10 @@ def test_pathlib():
 #     #TODO figure out how to check graphs are the "same" or isomorphic with RDFLib
 #     file_to_create = Path('./file_test.ttl').resolve()
 #     file_ps = File('.')
-#     file_ps.persist(g, filename='file_test', rdf_format='ttl')
+#     file_ps.persist(sample_graph, filename='file_test', rdf_format='ttl')
 #
 #     g2 = Graph().parse(str(file_to_create))
-#     assert g == g2
+#     assert sample_graph == g2
 
 
 def test_comment():

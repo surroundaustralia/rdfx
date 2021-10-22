@@ -35,7 +35,7 @@ g = Graph().parse(
 #             aws_key="test_aws_key",
 #             aws_secret="test_aws_secret",
 #         )
-#         response = s3_ps.persist(g, filename="test_key", rdf_format="ttl")
+#         response = s3_ps.persist(sample_graph, filename="test_key", rdf_format="ttl")
 #         assert response == "test_key"
 #
 

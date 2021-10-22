@@ -53,19 +53,23 @@ def test_sop_query_remote():
 
 
 def test_create_datagraph_local():
-    new_datagraph_local = local_sop_ps.create_datagraph()
-    query = f"""SELECT (COUNT(*) as ?count) WHERE {{GRAPH <{new_datagraph_local}> {{?s ?p ?o}} }}"""
-    query_response = local_sop_ps.query(query, new_datagraph_local)
-    response_dict = json.loads(query_response.text)
-    assert response_dict["results"]["bindings"][0]["count"]["value"] == "8"
+    datagraph_to_create = f"datagraph-{uuid.uuid4()}".replace("-", "_")
+    assert not local_sop_ps.asset_exists(datagraph_to_create)
+    new_datagraph_local = local_sop_ps.create_datagraph(datagraph_to_create)
+    assert local_sop_ps.asset_exists(new_datagraph_local)
+    assert datagraph_to_create == new_datagraph_local.split(":")[2]
+    # NB if you pass an invalid graph name to SOP for creation, it will try to make it valid, so the graph name
+    # returned by SOP will not necessarily match the one asked for.
 
 
 def test_create_datagraph_remote():
-    new_datagraph_remote = remote_sop_ps.create_datagraph()
-    query = f"""SELECT (COUNT(*) as ?count) WHERE {{GRAPH <{new_datagraph_remote}> {{?s ?p ?o}} }}"""
-    query_response = remote_sop_ps.query(query, new_datagraph_remote)
-    response_dict = json.loads(query_response.text)
-    assert response_dict["results"]["bindings"][0]["count"]["value"] == "8"
+    datagraph_to_create = f"datagraph-{uuid.uuid4()}".replace("-", "_")
+    assert not remote_sop_ps.asset_exists(datagraph_to_create)
+    new_datagraph_remote = remote_sop_ps.create_datagraph(datagraph_to_create)
+    assert remote_sop_ps.asset_exists(new_datagraph_remote)
+    assert datagraph_to_create == new_datagraph_remote.split(":")[2]
+    # NB if you pass an invalid graph name to SOP for creation, it will try to make it valid, so the graph name
+    # returned by SOP will not necessarily match the one asked for.
 
 
 def test_create_workflow_local():

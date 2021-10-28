@@ -1,14 +1,14 @@
-# Google-style docstrings: https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
 import getpass
+import io
 import json
 import warnings
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from datetime import datetime
 from http import HTTPStatus
 from io import BytesIO
 from pathlib import Path
 from typing import List, Literal, Optional, Union
+from urllib.parse import parse_qs
 
 import httpx
 from rdflib import Graph, URIRef
@@ -338,14 +338,29 @@ class SOP(PersistenceSystem):
         if not self.client:
             self._create_client()
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")  # ignore the rdflib NT serializer warning
-            content = "INSERT DATA {\n" + g.serialize(format="nt") + "\n}"
-
-        self.client.post(
-            self.system_iri + "/sparql",
-            data={"update": content, "using-graph-uri": graph_iri},
+        content = g.serialize(format="turtle", encoding="utf-8")
+        headers = {}
+        if self.local:
+            headers["Cookie"] = "username=Administrator"
+        if graph_iri.startswith("urn:x-evn-tag"):
+            projectGraph = SOP.graph_from_workflow(graph_iri)
+        else:
+            projectGraph = graph_iri
+        form_data = {
+            "_viewClass": "http://topbraid.org/teamwork#ImportRDFFileService",
+            "projectGraph": projectGraph,
+            "_base": graph_iri,
+            "format": "turtle",
+        }
+        if graph_iri.startswith("urn:x-evn-tag"):
+            form_data["tag"] = SOP.tag_from_workflow(graph_iri)
+        response = self.client.post(
+            self.system_iri + "/importFileUpload",
+            data=form_data,
+            files={"file": io.BytesIO(content)},
+            headers=headers,
         )
+        return parse_qs(response.text)["message"][0]
 
     def query(
         self,
@@ -530,6 +545,7 @@ class SOP(PersistenceSystem):
 
     @staticmethod
     def graph_from_workflow(workflow_graph):
+        # example input workflow: "urn:x-evn-tag:datagraph_name:workflow_name:Administrator"
         if not workflow_graph.startswith("urn:x-evn-tag"):
             raise ValueError(
                 "The workflow graph passed does not start with 'x-evn-tag' - it does not look like a SOP "
@@ -538,6 +554,17 @@ class SOP(PersistenceSystem):
         intermediate = workflow_graph.split(":")
         intermediate[1] = "x-evn-master"
         return ":".join(intermediate[:3])
+
+    @staticmethod
+    def tag_from_workflow(workflow_graph):
+        # example input workflow: "urn:x-evn-tag:datagraph_name:workflow_name:Administrator"
+        if not workflow_graph.startswith("urn:x-evn-tag"):
+            raise ValueError(
+                "The workflow graph passed does not start with 'x-evn-tag' - it does not look like a SOP "
+                "Workflow"
+            )
+        workflow_name = workflow_graph.split(":")[3]
+        return "urn:x-tags:" + workflow_name
 
 
 def prepare_files_list(files: Union[str, list, Path]) -> list:

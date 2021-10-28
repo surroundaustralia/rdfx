@@ -2,7 +2,6 @@ import json
 import os
 import uuid
 
-import httpx
 from rdflib import Graph
 
 from rdfx.persistence_systems import SOP
@@ -80,6 +79,7 @@ def test_create_workflow_local():
         graph_iri=new_datagraph, workflow_name=workflow_to_create
     )
     assert local_sop_ps.asset_exists(workflow_urn)
+    local_sop_ps._close()
 
 
 def test_create_workflow_remote():
@@ -102,41 +102,21 @@ def test_sop_duplicate_datagraph_creation():
 def test_local_workflow_insert():
     new_datagraph_local = local_sop_ps.create_datagraph()
     workflow_graph_urn = local_sop_ps.create_workflow(new_datagraph_local)
-
     # try to insert something in to the graph
     insert_response = local_sop_ps.persist(sample_graph, workflow_graph_urn)
-
-    # check the triples have been inserted in to the new workflow
-    query = f"""
-    SELECT (COUNT(*) as ?count)
-        WHERE {{
-          GRAPH <{workflow_graph_urn}>
-          {{ ?s ?p ?o . }}
-          FILTER NOT EXISTS {{ GRAPH <{new_datagraph_local}> {{?s ?p ?o}} }}
-        }}"""
-    query_response = local_sop_ps.query(query, workflow_graph_urn)
-    response_dict = json.loads(query_response.text)
-    assert response_dict["results"]["bindings"][0]["count"]["value"] == "2"
+    assert (
+        insert_response == "File with 2 statements has been imported successfully. \n"
+    )
 
 
 def test_remote_sop_workflow_insert():
-    new_datagraph_local = remote_sop_ps.create_datagraph()
-    workflow_graph_urn = remote_sop_ps.create_workflow(new_datagraph_local)
-
+    new_datagraph_remote = remote_sop_ps.create_datagraph()
+    workflow_graph_urn = remote_sop_ps.create_workflow(new_datagraph_remote)
     # try to insert something in to the graph
-    remote_sop_ps.persist(sample_graph, workflow_graph_urn)
-
-    # check the triples have been inserted in to the new workflow
-    query = f"""
-    SELECT (COUNT(*) as ?count)
-        WHERE {{
-          GRAPH <{workflow_graph_urn}>
-          {{ ?s ?p ?o . }}
-          FILTER NOT EXISTS {{ GRAPH <{new_datagraph_local}> {{?s ?p ?o}} }}
-        }}"""
-    query_response = remote_sop_ps.query(query, workflow_graph_urn)
-    response_dict = json.loads(query_response.text)
-    assert response_dict["results"]["bindings"][0]["count"]["value"] == "2"
+    insert_response = remote_sop_ps.persist(sample_graph, workflow_graph_urn)
+    assert (
+        insert_response == "File with 2 statements has been imported successfully. \n"
+    )
 
 
 def test_asset_size_local():

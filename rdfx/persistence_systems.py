@@ -416,6 +416,9 @@ class SOP(PersistenceSystem):
         if not self.client:
             self._create_client()
 
+        if datagraph_name and datagraph_name.startswith("urn:x-evn-master"):
+            datagraph_name = datagraph_name.strip("urn:x-evn-master:")
+
         if not datagraph_name:
             datagraph_name = f"Python_Created_Datagraph_From_{getpass.getuser()}_at_{datetime.now().isoformat()}"
 
@@ -511,6 +514,9 @@ class SOP(PersistenceSystem):
         if not self.client:
             self._create_client()
 
+        if asset_urn.startswith("urn:x-evn-tag"):
+            if not self.asset_exists(self.graph_from_workflow(asset_urn)):
+                return False
         query = f"ASK WHERE {{GRAPH <{asset_urn}> {{?s ?p ?o}} }}"
         response = self.client.post(
             self.system_iri + "/sparql",

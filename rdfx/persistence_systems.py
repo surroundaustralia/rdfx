@@ -375,7 +375,7 @@ class SOP(PersistenceSystem):
             self.system_iri + "/sparql",
             data={
                 "query": query,
-                "with-imports": "true",
+                "with-imports": "false",
                 "default-graph-uri": graph_iri,
             },
             headers={"Accept": return_format},

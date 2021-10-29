@@ -79,7 +79,6 @@ def test_create_workflow_local():
         graph_iri=new_datagraph, workflow_name=workflow_to_create
     )
     assert local_sop_ps.asset_exists(workflow_urn)
-    local_sop_ps._close()
 
 
 def test_create_workflow_remote():
@@ -90,6 +89,20 @@ def test_create_workflow_remote():
         graph_iri=new_datagraph, workflow_name=workflow_to_create
     )
     assert remote_sop_ps.asset_exists(workflow_urn)
+
+
+def test_create_manifest_local():
+    manifest_to_create = f"manifest-{uuid.uuid4()}".replace("-", "_")
+    assert not local_sop_ps.asset_exists(manifest_to_create)
+    manifest_urn = local_sop_ps.create_manifest(manifest_name=manifest_to_create)
+    assert local_sop_ps.asset_exists(manifest_urn)
+
+
+def test_create_manifest_remote():
+    manifest_to_create = f"manifest-{uuid.uuid4()}".replace("-", "_")
+    assert not remote_sop_ps.asset_exists(manifest_to_create)
+    manifest_urn = remote_sop_ps.create_manifest(manifest_name=manifest_to_create)
+    assert remote_sop_ps.asset_exists(manifest_urn)
 
 
 def test_sop_duplicate_datagraph_creation():

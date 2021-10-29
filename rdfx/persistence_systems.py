@@ -395,82 +395,57 @@ class SOP(PersistenceSystem):
 
     def create_datagraph(
         self,
-        datagraph_name: str = "",
-        subjectArea: str = "",
-        description: str = "",
-        default_namespace: str = None,
-        owl_imports: str = "",
-        spin_imports: str = "",
-        headers: dict = {},
+        datagraph_name: Optional[str] = None,
+        description: Optional[str] = None,
+        subjectArea: Optional[str] = None,
+        default_namespace: Optional[str] = None,
+        headers: Optional[dict] = None,
     ):
-        """
-        Creates a datagraph in SOP
-        :param name:
-        :param subjectArea:
-        :param description:
-        :param default_namespace:
-        :param owl_imports:
-        :param spin_imports:
-        :return:
-        """
-        if not self.client:
-            self._create_client()
 
         if datagraph_name and datagraph_name.startswith("urn:x-evn-master"):
             datagraph_name = datagraph_name.strip("urn:x-evn-master:")
-
         if not datagraph_name:
-            datagraph_name = f"Python_Created_Datagraph_From_{getpass.getuser()}_at_{datetime.now().isoformat()}"
-
-        # TODO use slugifier instead - though there's no guarantee it will slugify the same as SOP - does this matter?
+            datagraph_name = f"Python_created_Datagraph_by_{getpass.getuser()}_at_{datetime.now().isoformat()}"
         if not default_namespace:
             default_namespace = f"https://data.surroundaustralia.com/data/{datagraph_name}#".replace(
                 " ", "_"
             )
+        if not subjectArea:
+            subjectArea = ""
+        if not description:
+            description = ""
         # prepare the query
-        datagraph_creation_endpoint = self.system_iri + "/swp"
         if self.local:
             headers = {"Cookie": f"username=Administrator"}
         form_data = {
             "_viewClass": "http://topbraid.org/teamwork#CreateProjectService",
             "projectType": "http://teamwork.topbraidlive.org/datagraph/datagraphprojects#ProjectType",
             "subjectArea": subjectArea,
-            "owlImports": owl_imports,
-            "spinImports": spin_imports,
             "name": datagraph_name,
             "defaultNamespace": default_namespace,
             "comment": description,
         }
-        # send the datagraph creation payload
-        response = self.client.post(
-            datagraph_creation_endpoint,
-            data=form_data,
-            headers=headers,
-            cookies=self.client.cookies,
-        )
-        response_dict = json.loads(response.text)
-        assert response_dict["response"].split()[0] == "Successfully"
-        workflow_graph_iri = f"urn:x-evn-master:{response_dict['id']}"
-        return workflow_graph_iri
+
+        response_dict = self._create_sop_asset(form_data, headers)
+        datagraph_iri = f"urn:x-evn-master:{response_dict['id']}"
+        return datagraph_iri
 
     def create_workflow(
-        self, graph_iri: str, workflow_name: Optional[str] = None, headers: dict = {}
+        self,
+        graph_iri: str,
+        workflow_name: Optional[str] = None,
+        headers: Optional[dict] = None,
     ):
         """
+        :param headers: headers to add to the request
         :param graph_iri: The graph to add a workflow to
         :param workflow_name: The name of the workflow. If not provided, the current time is used
         :return: graph name
         """
-        if not self.client:
-            self._create_client()
 
         if not workflow_name:
-            workflow_name = f"Python_Created_Workflow_From_{getpass.getuser()}_at_{datetime.now().isoformat()}"
+            workflow_name = f"Python_created_Workflow_by_{getpass.getuser()}_at_{datetime.now().isoformat()}"
 
-        # prepare the query
-        workflow_creation_endpoint = self.system_iri + "/swp"
-        if self.local:
-            headers = {"Cookie": "username=Administrator"}
         form_data = {
             "_viewClass": "http://topbraid.org/teamwork#AddTagService",
             "projectGraph": graph_iri,
@@ -478,32 +453,59 @@ class SOP(PersistenceSystem):
             "name": workflow_name,
             "comment": "",
         }
-        # send to SOP
-        response = self.client.post(
-            workflow_creation_endpoint,
-            data=form_data,
-            headers=headers,
-            cookies=self.client.cookies,
-        )
-        response_dict = json.loads(response.text)
 
-        # verify the response, either created, or up
-        if "changed" in response_dict.keys():
-            assert response_dict["changed"]
-        elif "error" in response_dict.keys():
-            assert (
-                response_dict["error"]
-                == f"A working copy with the label {workflow_name} already exists."
-            )
-        else:
-            # TODO figure out what would cause the graph to fail to create, and what response is given
-            raise Exception("Failed to create workflow graph on SOP")
+        response_dict = self._create_sop_asset(form_data, headers)
+
         # use the name SOP returns for the workflow
         workflow_name = response_dict["rootResource"].split(":")[2]
         workflow_graph_iri = f"{graph_iri}:{workflow_name}:{self.username}".replace(
             "urn:x-evn-master", "urn:x-evn-tag"
         )
         return workflow_graph_iri
+
+    def create_manifest(
+        self,
+        manifest_name: Optional[str] = None,
+        description: Optional[str] = None,
+        subjectArea: Optional[str] = None,
+        default_namespace: Optional[str] = None,
+        headers: Optional[dict] = None,
+    ):
+        """
+        :param headers: headers to add to the request
+        :param graph_iri: The graph to add a workflow to
+        :param manifest_name: The name of the manifest. If not provided, the current time is used
+        :return: graph name
+        """
+        # set defaults
+        if not manifest_name:
+            manifest_name = f"Python_created_Manifest_by_{getpass.getuser()}_at_{datetime.now().isoformat()}"
+        if not default_namespace:
+            default_namespace = f"https://data.surroundaustralia.com/manifest/{manifest_name}#".replace(
+                " ", "_"
+            )
+        if not subjectArea:
+            subjectArea = ""
+        if not description:
+            description = ""
+
+        form_data = {
+            "_viewClass": "http://topbraid.org/teamwork#CreateProjectService",
+            "projectType": "http://surroundaustralia.com/ns/platform/OntologyRegister",
+            "owlImports": [
+                "urn:x-evn-master:sop_ontology_register_model",
+                "https://data.surroundaustralia.com/def/standards-baseline",
+            ],
+            "name": manifest_name,
+            "defaultNamespace": default_namespace,
+            "subjectArea": subjectArea,
+            "comment": description,
+        }
+
+        response_dict = self._create_sop_asset(form_data, headers)
+        # use the name SOP returns for the workflow
+        manifest_iri = f"urn:x-evn-master:{response_dict['id']}"
+        return manifest_iri
 
     def asset_exists(self, asset_urn: str) -> bool:
         """
@@ -524,6 +526,44 @@ class SOP(PersistenceSystem):
             headers={"Accept": "application/sparql-results+json"},
         )
         return json.loads(response.text)["boolean"]
+
+    def _create_sop_asset(self, form_data, headers: Optional[dict]):
+        # set defaults
+        if not headers:
+            headers = {}
+        if self.local:
+            headers["Cookie"] = "username=Administrator"
+        if not self.client:
+            self._create_client()
+
+        # send to SOP
+        response = self.client.post(
+            self.system_iri + "/swp",
+            data=form_data,
+            headers=headers,
+            cookies=self.client.cookies,
+        )
+        response_dict = json.loads(response.text)
+        keys = response_dict.keys()
+        if "response" in keys:  # datagraph creation success
+            if response_dict["response"].startswith("Successfully"):
+                return response_dict
+        elif "changed" in keys:  # workflkow creation success
+            if response_dict["changed"]:
+                return response_dict
+        elif "error" in keys:
+            if (
+                response_dict["error"]
+                == f"A working copy with the label {form_data['name']} already exists."
+            ):
+                print(
+                    f"Asset {form_data['name']} already exists in SOP instance {self.system_iri}."
+                )
+                return response_dict
+            else:
+                raise ValueError(response_dict["error"])
+        else:
+            raise Exception(f"Failed to create {form_data['name']} graph on SOP")
 
     def _close(self):
         self.client.get(self.system_iri + "/purgeuser?app=edg")

@@ -330,7 +330,7 @@ class SOP(PersistenceSystem):
         self.client = None
         self.local = True if system_iri.startswith("http://localhost") else False
 
-    def persist(self, g: Graph, graph_iri):
+    def persist(self, g: Graph, graph_iri, leading_comments=None):
         if not (graph_iri.startswith("http") or graph_iri.startswith("urn")):
             raise ValueError(
                 f"The value you supplied for graph_iri ({graph_iri}) is not valid"
@@ -462,6 +462,14 @@ class SOP(PersistenceSystem):
             "urn:x-evn-master", "urn:x-evn-tag"
         )
         return workflow_graph_iri
+
+    def create_vocabulary(
+        self, vocabulary_name: Optional[str] = None, headers: Optional[dict] = None
+    ):
+        """
+        :return:
+        """
+        pass
 
     def create_manifest(
         self,

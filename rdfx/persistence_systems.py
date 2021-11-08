@@ -1,7 +1,6 @@
 import getpass
 import io
 import json
-import warnings
 from abc import ABC, abstractmethod
 from datetime import datetime
 from http import HTTPStatus
@@ -330,7 +329,7 @@ class SOP(PersistenceSystem):
         self.client = None
         self.local = True if system_iri.startswith("http://localhost") else False
 
-    def persist(self, g: Graph, graph_iri, leading_comments=None):
+    def persist(self, g: Graph, graph_iri):
         if not (graph_iri.startswith("http") or graph_iri.startswith("urn")):
             raise ValueError(
                 f"The value you supplied for graph_iri ({graph_iri}) is not valid"
@@ -463,14 +462,6 @@ class SOP(PersistenceSystem):
         )
         return workflow_graph_iri
 
-    def create_vocabulary(
-        self, vocabulary_name: Optional[str] = None, headers: Optional[dict] = None
-    ):
-        """
-        :return:
-        """
-        pass
-
     def create_manifest(
         self,
         manifest_name: Optional[str] = None,
@@ -486,6 +477,8 @@ class SOP(PersistenceSystem):
         :return: graph name
         """
         # set defaults
+        if manifest_name and manifest_name.startswith("urn:x-evn-master"):
+            manifest_name = manifest_name.strip("urn:x-evn-master:")
         if not manifest_name:
             manifest_name = f"Python_created_Manifest_by_{getpass.getuser()}_at_{datetime.now().isoformat()}"
         if not default_namespace:
@@ -576,13 +569,14 @@ class SOP(PersistenceSystem):
     def _close(self):
         self.client.get(self.system_iri + "/purgeuser?app=edg")
 
-    def _create_client(self):
+    def _create_client(self, test_connection=False):
         self.system_iri += "/tbl"
         self.client = httpx.Client()
+
+        self.client.get(self.system_iri)
         if self.system_iri.startswith("http://localhost"):
-            pass  # auth is not required
+            return True  # auth is not required
         else:
-            self.client.get(self.system_iri)
             auth_response = self.client.post(
                 self.system_iri + "/j_security_check",
                 data={
@@ -590,12 +584,14 @@ class SOP(PersistenceSystem):
                     "j_password": self.password,
                     "login": "LOGIN",
                 },
+                headers={"Accept": "text/html"},
             )
             if auth_response.text:
-                raise ValueError(
-                    f"SOP authentication to {self.system_iri} unsuccessful. Check username and password. The "
-                    f"HTML is too long to print in python"
-                )
+                if test_connection:
+                    return auth_response.text
+                else:
+                    raise ValueError(auth_response.text)
+            return True
 
     @staticmethod
     def graph_from_workflow(workflow_graph):

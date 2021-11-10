@@ -6,6 +6,7 @@ CHANGELOG:
 - 2021-09-09:   David Habgood (DH): Initial version
 """
 import logging
+import warnings
 from typing import get_args
 
 import pytest

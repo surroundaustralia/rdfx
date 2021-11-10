@@ -2,8 +2,7 @@
 A small Python utility to convert, merge, and read/persist RDF data in different formats, across different "persistence systems".
 
 ## Use
-The same command line arguments are used when running this script as either Python or BASH.
-The command line utility at this point simplifies certain aspects of the merge/convert process.
+The command line utility covers merge and conversion functionality, and simplifies certain aspects of this. The
 
 ### Python
 Run the `rdfx.py` script with Python having installed the packages required by _requirements.txt_.
@@ -12,11 +11,34 @@ Run the `rdfx.py` script with Python having installed the packages required by _
 To utilise the command line util run:
 `python rdfx.py *args`
 
-For example to convert files:
-`python rdfx.py convert -f nt -o output_dir myfile.ttl`
-For Linux/Mac command line use, use `rdfx.sh`. This just calls the Python script, `rdfx.py` with your default Python installation and send it all the command line arguments. You must have the Python dependencies installed (see above) in your default Python environment to run this.
+To convert a file:
+`python rdfx.py convert myfile.ttl -f nt -o output_dir`
+For multiple files:
+`python rdfx.py convert myfile1.ttl myfile2.ttl -f nt -o output_dir`
+A directory of files:
+`python rdfx.py convert files_dir -f nt -o output_dir`
+To merge multiple files:
+`python rdfx.py merge myfile1.ttl myfile2.ttl -f nt -o output_dir`
+To merge a directory of files:
+`python rdfx.py merge files_dir -f nt -o output_dir`
 
-### Commands
+To simplify usage of the command line utility at present, the following behaviour has been set:
+
+Type | Output Filenames
+---|---
+Merge | merged.{format}
+Convert | file1.{format} file2.{format} ...
+
+That is, when merging, the output filename will be "merged", with the correct file format.
+When converting, the output filename will be the same as the input filename, with the correct file format.
+This behaviour simplifies input to the command line util, allowing multiple files and directories to be input without
+confusion as to which specified filenames are for input or output, and mappings between input and output, especially
+directories or multiple files are converted/merged.
+
+The python utilities behind the command line tool can be configured to set user specified filenames, for these cases
+use Python.
+
+### Command line tool documentation
 These usage notes come from running the help command in the tool, e.g. `python rdfx.ph -h`:
 
 ```bash
@@ -34,7 +56,6 @@ optional arguments:
                         if set, the output location for merged or converted files, defaults to the current working directory
   --comments COMMENTS   Comments to prepend to the RDF, turtle only.
 ```
-
 
 ## License
 LGPL - see the [LICENSE file](LICENSE) for details

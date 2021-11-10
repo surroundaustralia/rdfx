@@ -1,0 +1,13 @@
+image: python:3.8
+
+pipelines:
+  branches:
+    master:
+      - step:
+          name: "Run tests"
+          caches:
+            - pip
+          script:
+            - pip install poetry
+            - poetry install
+            - poetry run pytest --ignore=tests/test_persistence_system_sop.py

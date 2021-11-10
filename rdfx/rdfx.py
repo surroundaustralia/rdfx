@@ -69,7 +69,11 @@ def convert(
 
 
 def merge(
-    rdf_files: List[Path], persistence_system, output_format, output_filename="merged"
+    rdf_files: List[Path],
+    persistence_system,
+    output_format,
+    output_filename,
+    leading_comments=None,
 ):
     """
     Merges a given set of RDF files into one graph
@@ -84,7 +88,7 @@ def merge(
     g = Graph()
     for f in rdf_files:
         g.parse(f, format=RDF_FILE_ENDINGS[f.suffix.lstrip(".")])
-    persistence_system.persist(g, output_filename, rdf_format=output_format)
+    persistence_system.persist(g, output_filename, output_format, leading_comments)
 
 
 def persist_to(persistence_system: PersistenceSystem, g: Graph):
@@ -108,7 +112,10 @@ if __name__ == "__main__":
     parser.add_argument("method", choices=("convert", "merge"))
 
     parser.add_argument(
-        "data", nargs="+", type=str, help="Path to the RDF file or directory of files"
+        "data",
+        nargs="+",
+        type=str,
+        help="Path to the RDF file or directory of files for merging or conversion.",
     )
 
     parser.add_argument(
@@ -139,12 +146,8 @@ if __name__ == "__main__":
 
     if args.method == "merge":
         files_list = prepare_files_list(args.data)
-        ps = File(
-            directory=(output_loc / f"merged.{args.format}").resolve(),
-            rdf_format=args.format,
-            leading_comments=args.comments,
-        )
-        merge(files_list, ps)
+        ps = File(directory=output_loc)
+        merge(files_list, ps, args.format, "merged", args.comments)
 
     if args.method == "convert":
         ps = File(directory=output_loc)

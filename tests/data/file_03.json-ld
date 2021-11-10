@@ -1,0 +1,30 @@
+[
+  {
+    "@id": "http://orcid.org/0000-0002-8742-7732",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "https://schema.org/Person"
+    ],
+    "https://schema.org/affiliation": [
+      {
+        "@id": "https://surroundaustralia.com"
+      }
+    ],
+    "https://schema.org/email": [
+      {
+        "@type": "http://www.w3.org/2001/XMLSchema#anyURI",
+        "@value": "jamie.feiss@surroundaustralia.com"
+      }
+    ],
+    "https://schema.org/jobTitle": [
+      {
+        "@value": "Programmer"
+      }
+    ],
+    "https://schema.org/name": [
+      {
+        "@value": "Jamie Feiss"
+      }
+    ]
+  }
+]

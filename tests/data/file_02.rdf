@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:sdo="https://schema.org/"
+>
+  <rdf:Description rdf:about="http://orcid.org/0000-0002-8742-7731">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+    <rdf:type rdf:resource="https://schema.org/Person"/>
+    <sdo:affiliation rdf:resource="https://surroundaustralia.com"/>
+    <sdo:email rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">david.habgood@surroundaustralia.com</sdo:email>
+    <sdo:jobTitle>Applications Architect</sdo:jobTitle>
+    <sdo:name>David Habgood</sdo:name>
+  </rdf:Description>
+</rdf:RDF>

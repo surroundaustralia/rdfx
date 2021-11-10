@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from http import HTTPStatus
 from io import BytesIO
+from json.decoder import JSONDecodeError
 from pathlib import Path
 from typing import List, Literal, Optional, Union
 from urllib.parse import parse_qs
@@ -526,7 +527,11 @@ class SOP(PersistenceSystem):
             data={"query": query},
             headers={"Accept": "application/sparql-results+json"},
         )
-        return json.loads(response.text)["boolean"]
+        try:
+            return json.loads(response.text)["boolean"]
+        except JSONDecodeError:
+            # SOP exception
+            raise Exception(response.text)
 
     def _create_sop_asset(self, form_data, headers: Optional[dict]):
         # set defaults

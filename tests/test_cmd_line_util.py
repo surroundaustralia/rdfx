@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 
-print(os.getcwd())
 from rdfx.persistence_systems import prepare_files_list
 
 

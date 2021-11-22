@@ -363,10 +363,7 @@ class SOP(PersistenceSystem):
         return parse_qs(response.text)["message"][0]
 
     def query(
-        self,
-        query,
-        graph_iri,
-        return_format: Optional[str] = "application/sparql-results+json",
+        self, query, graph_iri, return_format: Optional[str] = "application/rdf+xml"
     ):
         if not self.client:
             self._create_client()
@@ -389,7 +386,7 @@ class SOP(PersistenceSystem):
         :return:
         """
         query = f"""SELECT (COUNT(*) as ?count) WHERE {{GRAPH <{asset_iri}> {{?s ?p ?o}} }}"""
-        query_response = self.query(query, asset_iri)
+        query_response = self.query(query, asset_iri, "application/sparql-results+json")
         response_dict = json.loads(query_response.text)
         return int(response_dict["results"]["bindings"][0]["count"]["value"])
 

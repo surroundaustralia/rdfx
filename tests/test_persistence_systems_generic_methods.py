@@ -86,14 +86,14 @@ def test_generate_string_ttl_with_two_comments():
 
 def test_valid_types():
     # this test is (almost) redundant as it reads from the list of valid RDF formats
-    allowed_types = get_args(RDF_FORMATS)
+    allowed_types = get_args(VALID_RDF_FORMATS)
     for a_type in allowed_types:
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter(
                     "ignore"
                 )  # ignore the rdflib NT serializer warning
-                String().persist(Graph(), rdf_format=a_type)
+                String().write(Graph(), rdf_format=a_type)
         except ValueError:
             raise
 
@@ -101,7 +101,7 @@ def test_valid_types():
 def test_invalid_types():
     invalid_type = "aslkdjfsadf"
     with pytest.raises(PluginException):
-        File(".").persist(Graph(), "my_graph", rdf_format=invalid_type)
+        File(".").write(Graph(), "my_graph", rdf_format=invalid_type)
 
 
 def test_prepare_files_list_from_string():

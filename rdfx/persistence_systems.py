@@ -1,19 +1,23 @@
+from __future__ import annotations
+
 import getpass
 import io
 import json
 from abc import ABC, abstractmethod
 from datetime import datetime
 from http import HTTPStatus
-from io import BytesIO
+from io import BytesIO, StringIO
 from json.decoder import JSONDecodeError
 from pathlib import Path
-from typing import List, Literal, Optional, Union
+from typing import List, Literal, Optional, Tuple, Union, get_args
 from urllib.parse import parse_qs
 
 import httpx
 from rdflib import Graph, URIRef
 
 RDF_FORMATS = Literal["ttl", "turtle", "xml", "json-ld", "nt", "n3"]
+VALID_RDF_FORMATS: Tuple[RDF_FORMATS, ...] = get_args(RDF_FORMATS)
+
 RDF_FILE_ENDINGS = {
     "ttl": "turtle",
     "turtle": "turtle",
@@ -33,7 +37,19 @@ class PersistenceSystem(ABC):
         pass
 
     @abstractmethod
-    def persist(self, g: Graph, rdf_format, leading_comments, *args):
+    def read(self, graph_name, rdf_format, *args):
+        """
+        Reads the named graph in the form implemented by this Persistence System
+
+        Args:
+            graph_name (Graph): The graph_name to read. Only context-less graphs allowed.
+            :param graph_name:
+            :param rdf_format:
+        """
+        pass
+
+    @abstractmethod
+    def write(self, g: Graph, rdf_format, leading_comments, *args):
         """
         Persists the given Graph in the form implemented by this Persistence System
 
@@ -59,9 +75,9 @@ class PersistenceSystem(ABC):
 
     @staticmethod
     def rdf_format_validator(rdf_format):
-        if rdf_format not in RDF_FORMATS.__init__("__args__"):
+        if rdf_format not in VALID_RDF_FORMATS:
             raise ValueError(
-                f"The RDF format selected must be one of {', '.join(RDF_FORMATS.__init__('__args__'))}"
+                f"The RDF format selected must be one of {', '.join(VALID_RDF_FORMATS)}"
             )
 
     @staticmethod
@@ -93,9 +109,33 @@ class String(PersistenceSystem):
     """
 
     def __init__(self):
+        self.name = "String"
         super().__init__()
 
-    def persist(
+    def read(self, string: str, rdf_format: RDF_FORMATS = "turtle"):
+        """
+        Reads the given string and returns a Graph
+
+        Args:
+            string (str): The string to read
+            rdf_format (str): The RDFlib RDF format to parse the string as
+
+        Returns:
+            Graph: The parsed Graph
+        """
+        string_obj = StringIO(string)
+        leading_comments = []
+        if rdf_format == "turtle":
+            while True:
+                line = string_obj.readline()
+                if line.startswith("#"):
+                    leading_comments.append(line.lstrip("# ").rstrip("\n"))
+                else:
+                    break
+        graph = Graph().parse(data=string, format=rdf_format)
+        return leading_comments, graph
+
+    def write(
         self,
         g: Graph,
         rdf_format: RDF_FORMATS = "turtle",
@@ -125,7 +165,21 @@ class File(PersistenceSystem):
         if not self.directory.is_dir():
             self.directory.mkdir()
 
-    def persist(
+    def read(self, filename: str, rdf_format: RDF_FORMATS = "turtle"):
+        leading_comments = []
+        file_path = self.directory / filename
+        graph = Graph().parse(str(file_path), format=rdf_format)
+        if rdf_format == "turtle":
+            with open(file_path, "r") as f:
+                while True:
+                    line = f.readline()
+                    if line.startswith("#"):
+                        leading_comments.append(line.lstrip("# "))
+                    else:
+                        break
+        return leading_comments, graph
+
+    def write(
         self,
         g: Graph,
         filename: str,
@@ -158,6 +212,7 @@ class S3(PersistenceSystem):
     def __init__(
         self, bucket: str, aws_key: str, aws_secret: str, region: str = "ap-southeast-2"
     ):
+
         for item in [bucket, aws_key, aws_secret, region]:
             if not isinstance(item, str):
                 raise ValueError(
@@ -169,7 +224,7 @@ class S3(PersistenceSystem):
         self.aws_secret = aws_secret
         self.region = region
 
-    def persist(
+    def write(
         self,
         g: Graph,
         filename: str,
@@ -203,7 +258,7 @@ class GraphDB(PersistenceSystem):
     Persist to an instance of GraphDB
 
     Args:
-        system_iri (str): The IRI of the GraphDB system. Something like http://localhost:7200 (no training slash)
+        location (str): The IRI of the GraphDB system. Something like http://localhost:7200 (no training slash)
         repo_id (str): The ID of the repository on this GraphDB system to persist to
         graph_iri (str): The IRI of the graph to write to. Optional. Default is non (default graph)
         username (str): The username of a user on this GraphDB instance. Optional.
@@ -212,26 +267,30 @@ class GraphDB(PersistenceSystem):
 
     def __init__(
         self,
-        system_iri: str,
+        location: str,
         repo_id: str,
         username: Optional[str] = None,
         password: Optional[str] = None,
     ):
+        self.name = "GraphDB"
 
-        if system_iri is None or not system_iri.startswith("http"):
+        if location is None or not location.startswith("http"):
             raise ValueError(
-                f"The value you supplied for system_iri ({system_iri}) is not valid"
+                f"The value you supplied for location ({location}) is not valid"
             )
 
         if repo_id is None:
             raise ValueError(f"The value you supplied for repo_id cannot be None")
 
-        self.system_iri = system_iri
+        self.location = location
         self.repo_id = repo_id
         self.username = username
         self.password = password
 
-    def persist(self, g: Graph, graph_iri):
+    def __repr__(self):
+        return "GraphDB"
+
+    def write(self, g: Graph, graph_iri):
         if graph_iri is not None and not (
             graph_iri.startswith("http") or graph_iri.startswith("urn")
         ):
@@ -246,7 +305,7 @@ class Fuseki(PersistenceSystem):
     Persist to an instance of Fuseki
 
     Args:
-        system_iri (str): The IRI of the GraphDB system. Something like http://localhost:7200 (no training slash)
+        location (str): The IRI of the GraphDB system. Something like http://localhost:7200 (no training slash)
         repo_id (str): The ID of the repository on this GraphDB system to persist to
         graph_iri (str): The IRI of the graph to write to. Optional. Default is non (default graph)
         username (str): The username of a user on this Fuseki instance. Optional.
@@ -255,26 +314,26 @@ class Fuseki(PersistenceSystem):
 
     def __init__(
         self,
-        system_iri: str,
+        location: str,
         repo_id: str,
         username: Optional[str] = None,
         password: Optional[str] = None,
     ):
 
-        if system_iri is None or not system_iri.startswith("http"):
+        if location is None or not location.startswith("http"):
             raise ValueError(
-                f"The value you supplied for system_iri ({system_iri}) is not valid"
+                f"The value you supplied for location ({location}) is not valid"
             )
 
         if repo_id is None:
             raise ValueError(f"The value you supplied for repo_id cannot be None")
 
-        self.system_iri = system_iri
+        self.location = location
         self.repo_id = repo_id
         self.username = username
         self.password = password
 
-    def persist(self, g: Graph, graph_iri):
+    def write(self, g: Graph, graph_iri):
         if graph_iri is not None and not (
             graph_iri.startswith("http") or graph_iri.startswith("urn")
         ):
@@ -305,7 +364,7 @@ class SOP(PersistenceSystem):
     Persist to an instance of SURROUND Ontology Platform (SOP)
 
     Args:
-        system_iri (str): The IRI of the SOP system. Defaults to http://localhost:8083 (no trailing slash)
+        location (str): The IRI of the SOP system. Defaults to http://localhost:8083 (no trailing slash)
         repo_id (str): The ID of the repository on this GraphDB system to persist to
         graph_iri (str): The IRI of the graph to write to. Optional. Default is non (default graph)
         username (str): The username of a user on this SOP instance. Optional.
@@ -315,22 +374,22 @@ class SOP(PersistenceSystem):
 
     def __init__(
         self,
-        system_iri: str = "http://localhost:8083",
+        location: str = "http://localhost:8083",
         username: Optional[str] = "Administrator",
         password: Optional[str] = None,
     ):
-        if not system_iri.startswith("http"):
+        if not location.startswith("http"):
             raise ValueError(
-                f'The value you supplied for system_iri ({system_iri}) must start with "http" or "https"'
+                f'The value you supplied for location ({location}) must start with "http" or "https"'
             )
 
-        self.system_iri = system_iri
+        self.location = location
         self.username = username
         self.password = password
         self.client = None
-        self.local = True if system_iri.startswith("http://localhost") else False
+        self.local = True if location.startswith("http://localhost") else False
 
-    def persist(self, g: Graph, graph_iri):
+    def write(self, g: Graph, graph_iri):
         if not (graph_iri.startswith("http") or graph_iri.startswith("urn")):
             raise ValueError(
                 f"The value you supplied for graph_iri ({graph_iri}) is not valid"
@@ -355,29 +414,32 @@ class SOP(PersistenceSystem):
         if graph_iri.startswith("urn:x-evn-tag"):
             form_data["tag"] = SOP.tag_from_workflow(graph_iri)
         response = self.client.post(
-            self.system_iri + "/importFileUpload",
+            self.location + "/importFileUpload",
             data=form_data,
             files={"file": io.BytesIO(content)},
             headers=headers,
         )
         return parse_qs(response.text)["message"][0]
 
-    def query(
+    def read(
         self, query, graph_iri, return_format: Optional[str] = "application/rdf+xml"
     ):
         if not self.client:
             self._create_client()
-
-        response = self.client.post(
-            self.system_iri + "/sparql",
-            data={
-                "query": query,
-                "with-imports": "false",
-                "default-graph-uri": graph_iri,
-            },
-            headers={"Accept": return_format},
-        )
-        return response
+        try:
+            response = self.client.post(
+                self.location + "/sparql",
+                data={
+                    "query": query,
+                    "with-imports": "false",
+                    "default-graph-uri": graph_iri,
+                },
+                headers={"Accept": return_format},
+            )
+            g = Graph().parse(StringIO(response.text), format="xml")
+            return g
+        except Exception:
+            raise
 
     def asset_collection_size(self, asset_iri):
         """
@@ -386,7 +448,7 @@ class SOP(PersistenceSystem):
         :return:
         """
         query = f"""SELECT (COUNT(*) as ?count) WHERE {{GRAPH <{asset_iri}> {{?s ?p ?o}} }}"""
-        query_response = self.query(query, asset_iri, "application/sparql-results+json")
+        query_response = self.read(query, asset_iri, "application/sparql-results+json")
         response_dict = json.loads(query_response.text)
         return int(response_dict["results"]["bindings"][0]["count"]["value"])
 
@@ -520,7 +582,7 @@ class SOP(PersistenceSystem):
                 return False
         query = f"ASK WHERE {{GRAPH <{asset_urn}> {{?s ?p ?o}} }}"
         response = self.client.post(
-            self.system_iri + "/sparql",
+            self.location + "/sparql",
             data={"query": query},
             headers={"Accept": "application/sparql-results+json"},
         )
@@ -541,7 +603,7 @@ class SOP(PersistenceSystem):
 
         # send to SOP
         response = self.client.post(
-            self.system_iri + "/swp",
+            self.location + "/swp",
             data=form_data,
             headers=headers,
             cookies=self.client.cookies,
@@ -560,7 +622,7 @@ class SOP(PersistenceSystem):
                 == f"A working copy with the label {form_data['name']} already exists."
             ):
                 print(
-                    f"Asset {form_data['name']} already exists in SOP instance {self.system_iri}."
+                    f"Asset {form_data['name']} already exists in SOP instance {self.location}."
                 )
                 return response_dict
             else:
@@ -569,18 +631,18 @@ class SOP(PersistenceSystem):
             raise Exception(f"Failed to create {form_data['name']} graph on SOP")
 
     def _close(self):
-        self.client.get(self.system_iri + "/purgeuser?app=edg")
+        self.client.get(self.location + "/purgeuser?app=edg")
 
     def _create_client(self, test_connection=False):
-        self.system_iri += "/tbl"
+        self.location += "/tbl"
         self.client = httpx.Client()
 
-        self.client.get(self.system_iri)
-        if self.system_iri.startswith("http://localhost"):
+        self.client.get(self.location)
+        if self.location.startswith("http://localhost"):
             return True  # auth is not required
         else:
             auth_response = self.client.post(
-                self.system_iri + "/j_security_check",
+                self.location + "/j_security_check",
                 data={
                     "j_username": self.username,
                     "j_password": self.password,
@@ -637,3 +699,6 @@ def prepare_files_list(files: Union[str, list, Path]) -> list:
         elif fp.is_file():
             files_list.append(fp)
     return files_list
+
+
+PERSISTENCE_SYSTEMS = {k.__name__: k for k in [String, File, SOP, GraphDB, Fuseki, S3]}

@@ -35,7 +35,7 @@ def test_asset_exists_remote_positive():
 
 def test_sop_query_local():
     query = "SELECT * { ?s ?p ?o } LIMIT 10"
-    results = json.loads(local_sop_ps.query(query, existing_datagraph).text)["results"][
+    results = json.loads(local_sop_ps.read(query, existing_datagraph).text)["results"][
         "bindings"
     ]
     # simply validating we are getting results back at this point
@@ -44,9 +44,9 @@ def test_sop_query_local():
 
 def test_sop_query_remote():
     query = "SELECT * { ?s ?p ?o } LIMIT 10"
-    results = json.loads(remote_sop_ps.query(query, existing_datagraph).text)[
-        "results"
-    ]["bindings"]
+    results = json.loads(remote_sop_ps.read(query, existing_datagraph).text)["results"][
+        "bindings"
+    ]
     # simply validating we are getting results back at this point
     assert len(results) == 10
 
@@ -116,7 +116,7 @@ def test_local_workflow_insert():
     new_datagraph_local = local_sop_ps.create_datagraph()
     workflow_graph_urn = local_sop_ps.create_workflow(new_datagraph_local)
     # try to insert something in to the graph
-    insert_response = local_sop_ps.persist(sample_graph, workflow_graph_urn)
+    insert_response = local_sop_ps.write(sample_graph, workflow_graph_urn)
     assert (
         insert_response == "File with 2 statements has been imported successfully. \n"
     )
@@ -126,7 +126,7 @@ def test_remote_sop_workflow_insert():
     new_datagraph_remote = remote_sop_ps.create_datagraph()
     workflow_graph_urn = remote_sop_ps.create_workflow(new_datagraph_remote)
     # try to insert something in to the graph
-    insert_response = remote_sop_ps.persist(sample_graph, workflow_graph_urn)
+    insert_response = remote_sop_ps.write(sample_graph, workflow_graph_urn)
     assert (
         insert_response == "File with 2 statements has been imported successfully. \n"
     )

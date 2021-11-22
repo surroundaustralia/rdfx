@@ -65,7 +65,7 @@ def convert(
 ):
     input_format = get_input_format(input_file_path)
     g = Graph().parse(str(input_file_path), format=input_format)
-    persistence_system.persist(g, output_filename, output_format, comments)
+    persistence_system.write(g, output_filename, output_format, comments)
 
 
 def merge(
@@ -88,7 +88,7 @@ def merge(
     g = Graph()
     for f in rdf_files:
         g.parse(f, format=RDF_FILE_ENDINGS[f.suffix.lstrip(".")])
-    persistence_system.persist(g, output_filename, output_format, leading_comments)
+    persistence_system.write(g, output_filename, output_format, leading_comments)
 
 
 def persist_to(persistence_system: PersistenceSystem, g: Graph):
@@ -97,7 +97,7 @@ def persist_to(persistence_system: PersistenceSystem, g: Graph):
             f"You must select of the the subclasses of PersistenceSystem to use for the persistence_system argument"
         )
     else:
-        persistence_system.persist(g)
+        persistence_system.write(g)
 
 
 if __name__ == "__main__":

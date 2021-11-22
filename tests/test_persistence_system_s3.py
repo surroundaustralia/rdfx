@@ -44,7 +44,7 @@ g = Graph().parse(
 def test_missing_credentials():
     with pytest.raises(TypeError):
         s3_ps = S3(bucket="cadastre-3d-semantic-documents")
-        s3_ps.persist(g, filename="test_key", rdf_format="ttl")
+        s3_ps.write(g, filename="test_key", rdf_format="ttl")
 
 
 @mock_s3
@@ -55,7 +55,7 @@ def test_invalid_format():
             aws_key="test_aws_key",
             aws_secret="test_aws_secret",
         )
-        s3_ps.persist(g, filename="test_key", rdf_format="blahblah")
+        s3_ps.write(g, filename="test_key", rdf_format="blahblah")
 
 
 @mock_s3
@@ -66,4 +66,4 @@ def test_invalid_bucket_name():
             aws_key="test_aws_key",
             aws_secret="test_aws_secret",
         )
-        s3_ps.persist(g, filename="test_key", rdf_format="ttl")
+        s3_ps.write(g, filename="test_key", rdf_format="ttl")

@@ -17,7 +17,7 @@ def test_pathlib():
     """Test a graph can be persisted to file from a pathlib Path"""
     file_to_create = Path("./file_test.ttl").resolve()
     file_ps = File(".")
-    file_ps.persist(g, filename="file_test", rdf_format="ttl")
+    file_ps.write(g, filename="file_test", rdf_format="ttl")
     assert file_to_create.exists()
     # delete the file
     file_to_create.unlink()

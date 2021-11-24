@@ -441,6 +441,30 @@ class SOP(PersistenceSystem):
         except Exception:
             raise
 
+    def query(
+        self, query, graph_iri, return_format: Optional[str] = "application/json"
+    ):
+        if not self.client:
+            self._create_client()
+        try:
+            response = self.client.post(
+                self.location + "/sparql",
+                data={
+                    "query": query,
+                    "with-imports": "false",
+                    "default-graph-uri": graph_iri,
+                },
+                headers={"Accept": return_format},
+            )
+            text_result = json.loads(response.text)
+            result = [
+                {str(k): v for k, v in i.items()}
+                for i in text_result["results"]["bindings"]
+            ]
+            return result
+        except Exception:
+            raise
+
     def asset_collection_size(self, asset_iri):
         """
         A wrapper around query to return the size of a given graph

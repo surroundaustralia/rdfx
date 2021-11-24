@@ -432,7 +432,7 @@ class SOP(PersistenceSystem):
                 data={
                     "query": query,
                     "with-imports": "false",
-                    "default-graph-uri": graph_iri,
+                    # "default-graph-uri": graph_iri,
                 },
                 headers={"Accept": return_format},
             )
@@ -604,6 +604,8 @@ class SOP(PersistenceSystem):
         if asset_urn.startswith("urn:x-evn-tag"):
             if not self.asset_exists(self.graph_from_workflow(asset_urn)):
                 return False
+            else:
+                return True
         query = f"ASK WHERE {{GRAPH <{asset_urn}> {{?s ?p ?o}} }}"
         response = self.client.post(
             self.location + "/sparql",

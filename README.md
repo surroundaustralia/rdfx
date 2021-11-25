@@ -11,16 +11,16 @@ Run the `rdfx.py` script with Python having installed the packages required by _
 To utilise the command line util run:
 `python rdfx.py *args`
 
-To convert a file:
-`python rdfx.py convert myfile.ttl -f nt -o output_dir`
-For multiple files:
-`python rdfx.py convert myfile1.ttl myfile2.ttl -f nt -o output_dir`
-A directory of files:
-`python rdfx.py convert files_dir -f nt -o output_dir`
-To merge multiple files:
-`python rdfx.py merge myfile1.ttl myfile2.ttl -f nt -o output_dir`
-To merge a directory of files:
-`python rdfx.py merge files_dir -f nt -o output_dir`
+To convert a file:  
+`python rdfx.py convert myfile.ttl -f nt -o output_dir`  
+For multiple files:  
+`python rdfx.py convert myfile1.ttl myfile2.ttl -f nt -o output_dir`  
+A directory of files:  
+`python rdfx.py convert files_dir -f nt -o output_dir`  
+To merge multiple files:  
+`python rdfx.py merge myfile1.ttl myfile2.ttl -f nt -o output_dir`  
+To merge a directory of files:  
+`python rdfx.py merge files_dir -f nt -o output_dir`  
 
 To simplify usage of the command line utility at present, the following behaviour has been set:
 

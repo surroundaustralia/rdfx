@@ -224,6 +224,9 @@ class S3(PersistenceSystem):
         self.aws_secret = aws_secret
         self.region = region
 
+    def read(self):
+        pass
+
     def write(
         self,
         g: Graph,

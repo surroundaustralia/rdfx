@@ -432,7 +432,7 @@ class SOP(PersistenceSystem):
                 data={
                     "query": query,
                     "with-imports": "false",
-                    # "default-graph-uri": graph_iri,
+                    "default-graph-uri": graph_iri,
                 },
                 headers={"Accept": return_format},
             )

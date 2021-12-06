@@ -167,6 +167,16 @@ class File(PersistenceSystem):
         if not self.directory.is_dir():
             self.directory.mkdir()
 
+    def asset_exists(self, graph_name: str) -> bool:
+        """
+        Checks whether an asset exists in a File, returns True or False
+        :param graph_name: The key of the object in S3
+        :return: boolean
+        """
+        if Path(self.directory / graph_name).exists():
+            return True
+        return False
+
     def read(self, filename: str, rdf_format: RDF_FORMATS = "turtle"):
         leading_comments = []
         file_path = self.directory / filename

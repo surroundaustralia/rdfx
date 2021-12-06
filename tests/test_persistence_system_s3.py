@@ -1,3 +1,4 @@
+import boto3
 import botocore
 import pytest
 import rdflib
@@ -67,3 +68,61 @@ def test_invalid_bucket_name():
             aws_secret="test_aws_secret",
         )
         s3_ps.write(g, filename="test_key", rdf_format="ttl")
+
+
+@mock_s3
+def test_read():
+    region = "ap-southeast-2"
+    kwargs = {
+        "aws_access_key_id": "aws_key",
+        "aws_secret_access_key": "aws_secret",
+        "region_name": region,
+    }
+    location = {"LocationConstraint": region}
+    client = boto3.client("s3", **kwargs)
+
+    # mock buckets
+    client.create_bucket(Bucket="test_bucket", CreateBucketConfiguration=location)
+    with open("data/file_01.ttl", "rb") as f:
+        client.put_object(Bucket="test_bucket", Key="test_file.ttl", Body=f.read())
+
+    s3_ps = S3(bucket="test_bucket", aws_key="aws_key", aws_secret="aws_secret")
+    graph = s3_ps.read(graph_name="test_file.ttl", rdf_format="ttl")
+    assert len(graph) == 6
+
+
+@mock_s3
+def test_asset_exists_positive():
+    region = "ap-southeast-2"
+    kwargs = {
+        "aws_access_key_id": "aws_key",
+        "aws_secret_access_key": "aws_secret",
+        "region_name": region,
+    }
+    location = {"LocationConstraint": region}
+    client = boto3.client("s3", **kwargs)
+
+    # mock buckets
+    client.create_bucket(Bucket="test_bucket", CreateBucketConfiguration=location)
+    with open("data/file_01.ttl", "rb") as f:
+        client.put_object(Bucket="test_bucket", Key="test_file.ttl", Body=f.read())
+    s3_ps = S3(bucket="test_bucket", aws_key="aws_key", aws_secret="aws_secret")
+    assert s3_ps.asset_exists("test_file.ttl")
+
+
+@mock_s3
+def test_asset_exists_negative():
+    region = "ap-southeast-2"
+    kwargs = {
+        "aws_access_key_id": "aws_key",
+        "aws_secret_access_key": "aws_secret",
+        "region_name": region,
+    }
+    location = {"LocationConstraint": region}
+    client = boto3.client("s3", **kwargs)
+
+    # mock buckets
+    client.create_bucket(Bucket="test_bucket", CreateBucketConfiguration=location)
+
+    s3_ps = S3(bucket="test_bucket", aws_key="aws_key", aws_secret="aws_secret")
+    assert not s3_ps.asset_exists("test_file.ttl")

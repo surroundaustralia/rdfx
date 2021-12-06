@@ -12,7 +12,9 @@ from pathlib import Path
 from typing import List, Literal, Optional, Tuple, Union, get_args
 from urllib.parse import parse_qs
 
+import boto3
 import httpx
+from botocore.errorfactory import ClientError
 from rdflib import Graph, URIRef
 
 RDF_FORMATS = Literal["ttl", "turtle", "xml", "json-ld", "nt", "n3"]
@@ -224,8 +226,37 @@ class S3(PersistenceSystem):
         self.aws_secret = aws_secret
         self.region = region
 
-    def read(self):
-        pass
+    def asset_exists(self, graph_name: str) -> bool:
+        """
+        Checks whether an asset exists in S3, returns True or False
+        :param graph_name: The key of the object in S3
+        :return: boolean
+        """
+        args = ["s3"]
+        kwargs = {
+            "aws_access_key_id": self.aws_key,
+            "aws_secret_access_key": self.aws_secret,
+            "region_name": self.region,
+        }
+        client = boto3.client(*args, **kwargs)
+        try:
+            client.head_object(Bucket=self.bucket, Key=graph_name)
+            return True
+        except ClientError:
+            return False
+
+    def read(self, graph_name, rdf_format: RDF_FORMATS = None):
+        args = ["s3"]
+        kwargs = {
+            "aws_access_key_id": self.aws_key,
+            "aws_secret_access_key": self.aws_secret,
+            "region_name": self.region,
+        }
+        client = boto3.client(*args, **kwargs)
+        object_bytes = client.get_object(Bucket=self.bucket, Key=graph_name)
+        return Graph().parse(
+            StringIO(object_bytes["Body"].read().decode()), format=rdf_format
+        )
 
     def write(
         self,
@@ -595,21 +626,21 @@ class SOP(PersistenceSystem):
         manifest_iri = f"urn:x-evn-master:{response_dict['id']}"
         return manifest_iri
 
-    def asset_exists(self, asset_urn: str) -> bool:
+    def asset_exists(self, graph_name: str) -> bool:
         """
         Checks whether an asset exists in SOP, returns True or False
-        :param asset_urn: The EDG URN of the asset
+        :param graph_name: The EDG URN of the asset
         :return: boolean
         """
         if not self.client:
             self._create_client()
 
-        if asset_urn.startswith("urn:x-evn-tag"):
-            if not self.asset_exists(self.graph_from_workflow(asset_urn)):
+        if graph_name.startswith("urn:x-evn-tag"):
+            if not self.asset_exists(self.graph_from_workflow(graph_name)):
                 return False
             else:
                 return True
-        query = f"ASK WHERE {{GRAPH <{asset_urn}> {{?s ?p ?o}} }}"
+        query = f"ASK WHERE {{GRAPH <{graph_name}> {{?s ?p ?o}} }}"
         response = self.client.post(
             self.location + "/sparql",
             data={"query": query},

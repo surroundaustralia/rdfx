@@ -170,7 +170,7 @@ class File(PersistenceSystem):
     def asset_exists(self, graph_name: str) -> bool:
         """
         Checks whether an asset exists in a File, returns True or False
-        :param graph_name: The key of the object in S3
+        :param graph_name: The key of the object on disk
         :return: boolean
         """
         if Path(self.directory / graph_name).exists():
@@ -202,7 +202,7 @@ class File(PersistenceSystem):
         file_path = self.directory / f"{filename}.{rdf_format}"
         s = self.generate_string(g, rdf_format, leading_comments)
 
-        with file_path.open("w") as f:
+        with file_path.open("w", encoding="utf-8") as f:
             f.write(s)
         return file_path
 
@@ -264,9 +264,8 @@ class S3(PersistenceSystem):
         }
         client = boto3.client(*args, **kwargs)
         object_bytes = client.get_object(Bucket=self.bucket, Key=graph_name)
-        return Graph().parse(
-            StringIO(object_bytes["Body"].read().decode()), format=rdf_format
-        )
+        text = StringIO(object_bytes["Body"].read().decode())
+        return None, Graph().parse(text, format=rdf_format)
 
     def write(
         self,

@@ -265,7 +265,14 @@ class S3(PersistenceSystem):
         client = boto3.client(*args, **kwargs)
         object_bytes = client.get_object(Bucket=self.bucket, Key=graph_name)
         text = StringIO(object_bytes["Body"].read().decode())
-        return None, Graph().parse(text, format=rdf_format)
+        leading_comments = []
+        if rdf_format in ("turtle", "ttl"):
+            for line in text:
+                if line.startswith("#"):
+                    leading_comments.append(line.lstrip("# ").rstrip("\n"))
+                else:
+                    break
+        return leading_comments, Graph().parse(text, format=rdf_format)
 
     def write(
         self,

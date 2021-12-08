@@ -87,7 +87,7 @@ def test_read():
         client.put_object(Bucket="test_bucket", Key="test_file.ttl", Body=f.read())
 
     s3_ps = S3(bucket="test_bucket", aws_key="aws_key", aws_secret="aws_secret")
-    graph = s3_ps.read(graph_name="test_file.ttl", rdf_format="ttl")
+    comments, graph = s3_ps.read(graph_name="test_file.ttl", rdf_format="ttl")
     assert len(graph) == 6
 
 

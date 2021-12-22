@@ -81,6 +81,13 @@ def test_asset_size_local():
     assert local_sop_ps.asset_collection_size(new_datagraph_local) == 8
 
 
-def test_export_asset():
-    comments, g = local_sop_ps.read_using_export("mytestdg")
-    assert len(g) == 5
+def test_read_workflow():
+    comments, g = local_sop_ps.read(
+        "urn:x-evn-tag:dsf_dslkfasldf_wsfj890:blahdeblah:Administrator"
+    )
+    assert len(g) == 4
+
+
+def test_read_asset():
+    comments, g = local_sop_ps.read("urn:x-evn-master:dsf_dslkfasldf_wsfj890")
+    assert len(g) == 4

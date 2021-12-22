@@ -471,7 +471,7 @@ class SOP(PersistenceSystem):
         )
         return parse_qs(response.text)["message"][0]
 
-    def read(
+    def read_deprecated(
         self, query, graph_iri, return_format: Optional[str] = "application/rdf+xml"
     ):
         if not self.client:
@@ -490,6 +490,22 @@ class SOP(PersistenceSystem):
             return g
         except Exception:
             raise
+
+    def read(self, graph_iri, rdf_format: str = "turtle"):
+        if not self.client:
+            self._create_client()
+        response = self.client.get(
+            self.location + f"/service/{graph_iri}/!/exportToRDF/{rdf_format}"
+        )
+        text = StringIO(response.text)
+        leading_comments = []
+        if rdf_format in ("turtle", "ttl"):
+            for line in text:
+                if line.startswith("#"):
+                    leading_comments.append(line.lstrip("# ").rstrip("\n"))
+                else:
+                    break
+        return leading_comments, Graph().parse(text, format=rdf_format)
 
     def query(
         self, query, graph_iri, return_format: Optional[str] = "application/json"

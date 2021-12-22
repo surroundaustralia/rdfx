@@ -494,9 +494,20 @@ class SOP(PersistenceSystem):
     def read(self, graph_iri, rdf_format: str = "turtle"):
         if not self.client:
             self._create_client()
-        response = self.client.get(
-            self.location + f"/service/{graph_iri}/!/exportToRDF/{rdf_format}"
-        )
+            if graph_iri.startswith("urn:x-evn-master"):
+                response = self.client.get(
+                    self.location
+                    + f"/service/{graph_iri.split(':')[2]}/!/exportToRDF/{rdf_format}"
+                )
+            elif graph_iri.startswith("urn:x-evn-tag"):
+                response = self.client.get(
+                    self.location
+                    + f"/service/{graph_iri.split(':')[2]}.{graph_iri.split(':')[3]}/!/exportToRDF/{rdf_format}"
+                )
+            else:
+                raise NotImplemented(
+                    "Only asset and workflow graphs are currently supported"
+                )
         text = StringIO(response.text)
         leading_comments = []
         if rdf_format in ("turtle", "ttl"):

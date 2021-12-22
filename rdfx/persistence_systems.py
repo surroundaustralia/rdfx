@@ -491,23 +491,42 @@ class SOP(PersistenceSystem):
         except Exception:
             raise
 
-    def read(self, graph_iri, rdf_format: str = "turtle"):
+    def read(self, graph_iri, rdf_format: str = "turtle", legacy: bool = False):
         if not self.client:
             self._create_client()
-        if graph_iri.startswith("urn:x-evn-master"):
-            response = self.client.get(
-                self.location
-                + f"/service/{graph_iri.split(':')[2]}/!/exportToRDF/{rdf_format}"
-            )
-        elif graph_iri.startswith("urn:x-evn-tag"):
-            response = self.client.get(
-                self.location
-                + f"/service/{graph_iri.split(':')[2]}.{graph_iri.split(':')[3]}/!/exportToRDF/{rdf_format}"
-            )
-        else:
-            raise NotImplemented(
-                "Only asset and workflow graphs are currently supported"
-            )
+        if not legacy:
+            if graph_iri.startswith("urn:x-evn-master"):
+                response = self.client.get(
+                    self.location
+                    + f"/service/{graph_iri.split(':')[2]}/!/exportToRDF/{rdf_format}"
+                )
+            elif graph_iri.startswith("urn:x-evn-tag"):
+                response = self.client.get(
+                    self.location
+                    + f"/service/{graph_iri.split(':')[2]}.{graph_iri.split(':')[3]}/!/exportToRDF/{rdf_format}"
+                )
+            else:
+                raise NotImplemented(
+                    "Only asset and workflow graphs are currently supported"
+                )
+        else:  # legacy
+            if graph_iri.startswith("urn:x-evn-master"):
+                params = {
+                    "_base": graph_iri,
+                    "id": "ExportToRDF",
+                    "projectGraph": graph_iri,
+                    "serialization": "http://topbraid.org/sparqlmotionlib#Turtle",
+                }
+            elif graph_iri.startswith("urn:x-evn-tag"):
+                params = {
+                    "_base": graph_iri,
+                    "id": "ExportToRDF",
+                    "projectGraph": self.graph_from_workflow(graph_iri),
+                    "serialization": "http://topbraid.org/sparqlmotionlib#Turtle",
+                    "tag": self.tag_from_workflow(graph_iri),
+                }
+            response = self.client.get(self.location + "/sparqlmotion", params=params)
+
         text = StringIO(response.text)
         leading_comments = []
         if rdf_format in ("turtle", "ttl"):

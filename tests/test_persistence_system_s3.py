@@ -83,7 +83,7 @@ def test_read():
 
     # mock buckets
     client.create_bucket(Bucket="test_bucket", CreateBucketConfiguration=location)
-    with open("data/file_01.ttl", "rb") as f:
+    with open("tests/data/file_01.ttl", "rb") as f:
         client.put_object(Bucket="test_bucket", Key="test_file.ttl", Body=f.read())
 
     s3_ps = S3(bucket="test_bucket", aws_key="aws_key", aws_secret="aws_secret")
@@ -104,7 +104,7 @@ def test_asset_exists_positive():
 
     # mock buckets
     client.create_bucket(Bucket="test_bucket", CreateBucketConfiguration=location)
-    with open("data/file_01.ttl", "rb") as f:
+    with open("tests/data/file_01.ttl", "rb") as f:
         client.put_object(Bucket="test_bucket", Key="test_file.ttl", Body=f.read())
     s3_ps = S3(bucket="test_bucket", aws_key="aws_key", aws_secret="aws_secret")
     assert s3_ps.asset_exists("test_file.ttl")

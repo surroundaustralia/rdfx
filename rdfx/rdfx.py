@@ -64,8 +64,9 @@ def convert(
     comments: str = None,
 ):
     input_format = get_input_format(input_file_path)
+    output_file_path = input_file_path.parent
     g = Graph().parse(str(input_file_path), format=input_format)
-    persistence_system.write(g, output_filename, output_format, comments)
+    persistence_system.write(g, output_filename, output_format, comments,output_file_path)
 
 
 def merge(

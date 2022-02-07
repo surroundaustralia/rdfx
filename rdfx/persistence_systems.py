@@ -197,9 +197,14 @@ class File(PersistenceSystem):
         filename: str,
         rdf_format: RDF_FORMATS = "ttl",
         leading_comments: Optional = None,
+        output_file_path: Optional = None,
     ):
 
-        file_path = self.directory / f"{filename}.{rdf_format}"
+        if output_file_path:
+            file_path = output_file_path / f"{filename}.{rdf_format}"
+        else:
+            file_path = self.directory / f"{filename}.{rdf_format}"
+
         s = self.generate_string(g, rdf_format, leading_comments)
 
         with file_path.open("w", encoding="utf-8") as f:

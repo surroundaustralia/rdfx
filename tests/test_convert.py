@@ -21,7 +21,7 @@ def test_ttl_nt():
 """
     input_file = Path("tests/data/file_01.ttl")
     output_format = "nt"
-    output_file = Path(f"./converted.{output_format}")
+    output_file = input_file.parent / Path(f"converted.{output_format}")
     ps = File(".")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")  # ignore the rdflib NT serializer warning
@@ -53,7 +53,7 @@ def test_ttl_comments():
 """
     input_file = Path("tests/data/file_01.ttl")
     output_format = "turtle"
-    output_file = Path(f"./converted.{output_format}")
+    output_file = input_file.parent / Path(f"converted.{output_format}")
     leading_comments = ["test comment one", "test comment two"]
     ps = File(".")
     convert(input_file, ps, output_file.stem, output_format, leading_comments)

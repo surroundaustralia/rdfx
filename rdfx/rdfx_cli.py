@@ -3,8 +3,7 @@ import os
 import sys
 from pathlib import Path
 from typing import List
-
-from persistence_systems import File, PersistenceSystem, prepare_files_list
+from rdfx import File, PersistenceSystem, prepare_files_list
 from rdflib import Graph, util
 
 RDF_FILE_ENDINGS = {

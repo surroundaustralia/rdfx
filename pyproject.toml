@@ -1,8 +1,13 @@
 [tool.poetry]
 name = "rdfx"
-version = "0.2.0"
+version = "0.4.3"
 description = "Tools for converting, merging, persisting and reading RDF data in different formats."
-authors = ["david-habgood <david.habgood@surroundaustralia.com>", "nicholas-car <nicholas.car@surroundaustralia.com>"]
+authors = ["david-habgood <david.habgood@surroundaustralia.com>", "nicholas-car <nicholas.car@surroundaustralia.com>","adam-davis <adam.davis@surroundaustralia.com>"]
+maintainers = ["adam-davis <adam.davis@surroundaustralia.com>"]
+readme = "README.md"
+repository = "https://github.com/surroundaustralia/rdfx"
+keywords = ["RDF", "Linked Data", "Turtle", "N-Triples", "Semantic Web", "RDFLib"]
+license = "BSD-3-Clause"
 
 [tool.poetry.dependencies]
 python = "^3.8"

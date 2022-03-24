@@ -3,8 +3,11 @@ import os
 import sys
 from pathlib import Path
 from typing import List
-from rdfx import File, PersistenceSystem, prepare_files_list
+
 from rdflib import Graph, util
+
+from rdfx.persistence_systems import (File, PersistenceSystem,
+                                      prepare_files_list)
 
 RDF_FILE_ENDINGS = {
     "ttl": "turtle",
@@ -65,7 +68,9 @@ def convert(
     input_format = get_input_format(input_file_path)
     output_file_path = input_file_path.parent
     g = Graph().parse(str(input_file_path), format=input_format)
-    persistence_system.write(g, output_filename, output_format, comments,output_file_path)
+    persistence_system.write(
+        g, output_filename, output_format, comments, output_file_path
+    )
 
 
 def merge(

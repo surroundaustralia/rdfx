@@ -3,7 +3,7 @@
 # rdfx
 A small Python utility to convert, merge, and read/persist RDF data in different formats, across different "persistence systems".
 
-## Use
+## How to Use
 The command line utility covers merge and conversion functionality, and simplifies certain aspects of this. The
 
 ### Python

@@ -1,7 +1,9 @@
+![](https://surroundaustralia.com/themes/custom/surround_australia/surround-logo-dark.svg)
+
 # rdfx
 A small Python utility to convert, merge, and read/persist RDF data in different formats, across different "persistence systems".
 
-## Use
+## How to Use
 The command line utility covers merge and conversion functionality, and simplifies certain aspects of this. The
 
 ### Python
@@ -66,18 +68,18 @@ LGPL - see the [LICENSE file](LICENSE) for details
 This uses [RDFlib](https://pypi.org/project/rdflib/).
 
 ## Contact
-Original library:
-**Nicholas J. Car**
-*Data Systems Architect*
-[SURROUND Australia Pty Ltd](http://surroundaustralia.com)
-<nicholas.car@surroundaustralia.com>
-GitHub: [nicholascar](https://github.com/nicholascar)
-ORCID: <https://orcid.org/0000-0002-8742-7730>
+Original library:  
+**Nicholas J. Car**  
+*Data Systems Architect*  
+[SURROUND Australia Pty Ltd](http://surroundaustralia.com)  
+<nicholas.car@surroundaustralia.com>  
+GitHub: [nicholascar](https://github.com/nicholascar)  
+ORCID: <https://orcid.org/0000-0002-8742-7730>  
 
-Updates around persistence systems:
-**David Habgood**
-*Application Architect*
-[SURROUND Australia Pty Ltd](https://surroundaustralia.com)
-<david.habgood@surroundaustrlaia.com>
-GitHub: [nicholascar](https://github.com/recalcitrantsupplant)
-https://orcid.org/0000-0002-3322-1868
+Updates around persistence systems:  
+**David Habgood**  
+*Application Architect*  
+[SURROUND Australia Pty Ltd](https://surroundaustralia.com)  
+<david.habgood@surroundaustrlaia.com>  
+GitHub: [nicholascar](https://github.com/recalcitrantsupplant)  
+https://orcid.org/0000-0002-3322-1868  

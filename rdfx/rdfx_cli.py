@@ -3,8 +3,12 @@ import os
 import sys
 from pathlib import Path
 from typing import List
+
+import rdflib
+
 from rdfx import File, PersistenceSystem, prepare_files_list
 from rdflib import Graph, util
+import re
 
 RDF_FILE_ENDINGS = {
     "ttl": "turtle",
@@ -99,6 +103,31 @@ def persist_to(persistence_system: PersistenceSystem, g: Graph):
     else:
         persistence_system.write(g)
 
+# removes unused namespace entries and re-serializes a graph with the prefixes in sorted order
+def clean_ttl(input_file_path:Path):
+    g = Graph()
+    g.parse(input_file_path)
+    all_ns = [n for n in g.namespaces()]
+    subjects = [s for s in g.subjects()]
+    predicates = [p for p in g.predicates()]
+    objects = [o for o in g.objects()]
+    all_prefixes = set(subjects + predicates + objects)
+    used_namespace = []
+    for full_prefix in all_prefixes:
+        for prefix in all_ns:
+            if prefix[1] in full_prefix:
+                used_namespace.append(prefix)
+
+    used_namespace = list(set(used_namespace))
+    used_namespace.sort(key=lambda tup: tup[0])
+    f = rdflib.Graph()
+    for name in used_namespace:
+        f.bind(name[0], name[1])
+
+    for s, p, o in g:
+        f.add((s, p, o))
+    f.serialize(destination=input_file_path, format='turtle')
+
 
 if __name__ == "__main__":
     if "-h" not in sys.argv and len(sys.argv) < 3:
@@ -109,7 +138,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("method", choices=("convert", "merge"))
+    parser.add_argument("method", choices=("convert", "merge", "clean"))
 
     parser.add_argument(
         "data",
@@ -157,3 +186,8 @@ if __name__ == "__main__":
         for file in files_list:
             output_filename = Path(file).stem
             convert(file, ps, output_filename, rdf_format, leading_comments)
+
+    if args.method == "clean":
+        files_list = prepare_files_list(args.data)
+        for file in files_list:
+            clean_ttl(file)

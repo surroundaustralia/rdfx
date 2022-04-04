@@ -21,6 +21,8 @@ To merge multiple files:
 `python rdfx.py merge myfile1.ttl myfile2.ttl -f nt -o output_dir`  
 To merge a directory of files:  
 `python rdfx.py merge files_dir -f nt -o output_dir`  
+To remove sort and remove unused prefixes in a turtle file:
+`python rdfx.py clean myfile.ttl`
 
 To simplify usage of the command line utility at present, the following behaviour has been set:
 

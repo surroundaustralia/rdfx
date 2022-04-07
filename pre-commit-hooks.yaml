@@ -1,0 +1,4 @@
+- id: clean_ttl
+    name: clean ttl
+    description: looks for unused prefixs in a turtle file and removes the lines that defines them, also sorts prefix definitions.
+    files: '\.ttl'

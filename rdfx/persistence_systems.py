@@ -206,6 +206,9 @@ class File(PersistenceSystem):
             file_path = self.directory / f"{filename}.{rdf_format}"
 
         s = self.generate_string(g, rdf_format, leading_comments)
+        # remove extra line at end of file
+        if s[-1] == '\n' and s[-2] == '\n':
+            s = s[:-1]
 
         with file_path.open("w", encoding="utf-8") as f:
             f.write(s)

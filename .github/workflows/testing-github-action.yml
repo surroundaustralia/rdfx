@@ -51,4 +51,4 @@ jobs:
       - name: Run tests
         run: |
           source .venv/bin/activate
-          poetry run pytest tests/ --ignore=tests/test_persistence_system_sop.py --ignore=tests/test_persistence_system_remote_sop.py --ignore=tests/test_persistence_system_local_sop.py
+          poetry run pytest tests/ --ignore=tests/test_persistence_system_sop.py --ignore=tests/test_persistence_system_remote_sop.py --ignore=tests/test_persistence_system_local_sop.py --ignore=tests\test_persistence_systems_generic_methods.py

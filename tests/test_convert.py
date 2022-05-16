@@ -7,7 +7,7 @@ from io import StringIO
 from pathlib import Path
 
 from rdfx.persistence_systems import File
-from rdfx.rdfx import convert
+from rdfx.rdfx_cli import convert
 
 
 def test_ttl_nt():

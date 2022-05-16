@@ -6,9 +6,8 @@ from typing import List
 
 import rdflib
 
-from rdfx import File, PersistenceSystem, prepare_files_list
+from rdfx.persistence_systems import File, PersistenceSystem, prepare_files_list
 from rdflib import Graph, util
-import re
 
 RDF_FILE_ENDINGS = {
     "ttl": "turtle",
@@ -105,6 +104,24 @@ def persist_to(persistence_system: PersistenceSystem, g: Graph):
 
 # removes unused namespace entries and re-serializes a graph with the prefixes in sorted order
 def clean_ttl(input_file_path:Path):
+    #get a list of all leading comments in the file
+    comments_list = []
+    comment_flag = False
+    with open(input_file_path, "r", encoding='utf-8', errors='ignore') as f:
+        for index, line in enumerate(f):
+            if len(line.strip()) > 0 and line.strip()[0] == '#' and index == 0:
+                comments_list.append(line.strip()[2:])
+                comment_flag = True
+
+            elif len(line.strip()) > 0 and line.strip()[0] == '#' and comment_flag:
+                comments_list.append(line.strip()[2:])
+
+            elif len(line.strip()) > 0 and line.strip()[0] != '#':
+                comment_flag = False
+
+            elif not comment_flag:
+                break
+
     g = Graph()
     g.parse(input_file_path)
     all_ns = [n for n in g.namespaces()]
@@ -126,7 +143,13 @@ def clean_ttl(input_file_path:Path):
 
     for s, p, o in g:
         f.add((s, p, o))
-    f.serialize(destination=input_file_path, format='turtle')
+    os.remove(input_file_path)
+    input_file_path = Path(input_file_path)
+    ps = File(directory=input_file_path.parent)
+    if len(comments_list) > 0:
+        ps.write(g=g, filename=input_file_path.stem, leading_comments=comments_list)
+    else:
+        ps.write(g=g, filename=input_file_path.stem)
 
 
 if __name__ == "__main__":
@@ -191,3 +214,4 @@ if __name__ == "__main__":
         files_list = prepare_files_list(args.data)
         for file in files_list:
             clean_ttl(file)
+

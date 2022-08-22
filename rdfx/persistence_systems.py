@@ -50,7 +50,7 @@ class PersistenceSystem(ABC):
         """
         pass
 
-    #@abstractmethod
+    # @abstractmethod
     def write(self, g: Graph, rdf_format, leading_comments, *args):
         """
         Persists the given Graph in the form implemented by this Persistence System
@@ -91,13 +91,11 @@ class PersistenceSystem(ABC):
             return g.serialize(format=rdf_format)
         else:
             PersistenceSystem.leading_comment_validator(leading_comments, rdf_format)
-            s = ""
-            for lc in leading_comments:
-                s += f"# {lc}\n"
+            content = "".join(f"# {comment}\n" for comment in leading_comments)
             # add a new line after the leading comments
-            s += "\n"
-            s += g.serialize(format=rdf_format)
-            return s
+            content += "\n"
+            content += g.serialize(format=rdf_format)
+            return content
 
 
 class String(PersistenceSystem):
@@ -186,7 +184,7 @@ class File(PersistenceSystem):
                 while True:
                     line = f.readline()
                     if line.startswith("#"):
-                        leading_comments.append(line.lstrip("# "))
+                        leading_comments.append(line.lstrip("# ").rstrip("\n"))
                     else:
                         break
         return leading_comments, graph
@@ -207,7 +205,7 @@ class File(PersistenceSystem):
 
         s = self.generate_string(g, rdf_format, leading_comments)
         # remove extra line at end of file
-        if s[-1] == '\n' and s[-2] == '\n':
+        if s[-1] == "\n" and s[-2] == "\n":
             s = s[:-1]
 
         with file_path.open("w", encoding="utf-8") as f:
@@ -435,7 +433,7 @@ class SOP(PersistenceSystem):
         location: str = "http://localhost:8083",
         username: Optional[str] = "Administrator",
         password: Optional[str] = None,
-        timeout: Optional[int] = 60
+        timeout: Optional[int] = 60,
     ):
         if not location.startswith("http"):
             raise ValueError(
@@ -456,10 +454,7 @@ class SOP(PersistenceSystem):
             )
         if not self.client:
             self._create_client()
-        content = ''
-        if leading_comments:
-            content = ''.join(leading_comments)
-        content = (bytes(content, encoding="utf-8") + bytes(g.serialize(), encoding="utf-8"))
+        content = self.generate_string(g, "ttl", leading_comments)
         headers = {}
         if self.local:
             headers["Cookie"] = "username=Administrator"
@@ -478,7 +473,7 @@ class SOP(PersistenceSystem):
         response = self.client.post(
             self.location + "/importFileUpload",
             data=form_data,
-            files={"file": io.BytesIO(content)},
+            files={"file": io.BytesIO(bytes(content.encode("utf-8")))},
             headers=headers,
             timeout=self.timeout,
         )
@@ -599,8 +594,10 @@ class SOP(PersistenceSystem):
         if not datagraph_name:
             datagraph_name = f"Python_created_Datagraph_by_{getpass.getuser()}_at_{datetime.now().isoformat()}"
         if not default_namespace:
-            default_namespace = f"https://data.surroundaustralia.com/data/{datagraph_name}#".replace(
-                " ", "_"
+            default_namespace = (
+                f"https://data.surroundaustralia.com/data/{datagraph_name}#".replace(
+                    " ", "_"
+                )
             )
         if not subjectArea:
             subjectArea = ""
@@ -675,8 +672,10 @@ class SOP(PersistenceSystem):
         if not manifest_name:
             manifest_name = f"Python_created_Manifest_by_{getpass.getuser()}_at_{datetime.now().isoformat()}"
         if not default_namespace:
-            default_namespace = f"https://data.surroundaustralia.com/manifest/{manifest_name}#".replace(
-                " ", "_"
+            default_namespace = (
+                f"https://data.surroundaustralia.com/manifest/{manifest_name}#".replace(
+                    " ", "_"
+                )
             )
         if not subjectArea:
             subjectArea = ""

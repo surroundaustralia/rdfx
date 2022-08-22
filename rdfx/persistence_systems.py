@@ -50,7 +50,7 @@ class PersistenceSystem(ABC):
         """
         pass
 
-    @abstractmethod
+    #@abstractmethod
     def write(self, g: Graph, rdf_format, leading_comments, *args):
         """
         Persists the given Graph in the form implemented by this Persistence System
@@ -435,6 +435,7 @@ class SOP(PersistenceSystem):
         location: str = "http://localhost:8083",
         username: Optional[str] = "Administrator",
         password: Optional[str] = None,
+        timeout: Optional[int] = 60
     ):
         if not location.startswith("http"):
             raise ValueError(
@@ -445,17 +446,20 @@ class SOP(PersistenceSystem):
         self.username = username
         self.password = password
         self.client = None
+        self.timeout = timeout
         self.local = True if location.startswith("http://localhost") else False
 
-    def write(self, g: Graph, graph_iri):
+    def write(self, g: Graph, graph_iri, leading_comments=None):
         if not (graph_iri.startswith("http") or graph_iri.startswith("urn")):
             raise ValueError(
                 f"The value you supplied for graph_iri ({graph_iri}) is not valid"
             )
         if not self.client:
             self._create_client()
-
-        content = g.serialize(format="turtle", encoding="utf-8")
+        content = ''
+        if leading_comments:
+            content = ''.join(leading_comments)
+        content = (bytes(content, encoding="utf-8") + bytes(g.serialize(), encoding="utf-8"))
         headers = {}
         if self.local:
             headers["Cookie"] = "username=Administrator"
@@ -476,6 +480,7 @@ class SOP(PersistenceSystem):
             data=form_data,
             files={"file": io.BytesIO(content)},
             headers=headers,
+            timeout=self.timeout,
         )
         return parse_qs(response.text)["message"][0]
 

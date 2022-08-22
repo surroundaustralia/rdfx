@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rdfx"
-version = "0.4.6"
+version = "0.4.7"
 description = "Tools for converting, merging, persisting and reading RDF data in different formats."
 authors = ["david-habgood <david.habgood@surroundaustralia.com>", "nicholas-car <nicholas.car@surroundaustralia.com>","adam-davis <adam.davis@surroundaustralia.com>"]
 maintainers = ["adam-davis <adam.davis@surroundaustralia.com>"]

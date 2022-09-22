@@ -152,7 +152,7 @@ def clean_ttl(input_file_path:Path):
         ps.write(g=g, filename=input_file_path.stem)
 
 
-if __name__ == "__main__":
+def main():
     if "-h" not in sys.argv and len(sys.argv) < 3:
         print(
             "ERROR: You must supply at a minimum the method (convert or merge), a file or files, and a target format"
@@ -215,3 +215,5 @@ if __name__ == "__main__":
         for file in files_list:
             clean_ttl(file)
 
+if __name__ == "__main__":
+    sys.exit(main())

@@ -25,9 +25,7 @@ def test_asset_exists_local_positive():
 
 def test_sop_query_local():
     query = "SELECT * { ?s ?p ?o } LIMIT 10"
-    results = json.loads(local_sop_ps.read(query, existing_datagraph).text)["results"][
-        "bindings"
-    ]
+    results = local_sop_ps.query(query, existing_datagraph)
     # simply validating we are getting results back at this point
     assert len(results) == 10
 
@@ -78,16 +76,19 @@ def test_local_workflow_insert():
 
 def test_asset_size_local():
     new_datagraph_local = local_sop_ps.create_datagraph()
-    assert local_sop_ps.asset_collection_size(new_datagraph_local) == 8
+    assert local_sop_ps.asset_collection_size(new_datagraph_local) == 7
 
 
 def test_read_workflow():
-    comments, g = local_sop_ps.read(
-        "urn:x-evn-tag:dsf_dslkfasldf_wsfj890:blahdeblah:Administrator"
-    )
-    assert len(g) == 4
+    new_datagraph_local = local_sop_ps.create_datagraph()
+    workflow_graph_urn = local_sop_ps.create_workflow(new_datagraph_local)
+    local_sop_ps.write(sample_graph, workflow_graph_urn)
+    comments, g = local_sop_ps.read(workflow_graph_urn)
+    assert len(g) == 6
 
 
 def test_read_asset():
-    comments, g = local_sop_ps.read("urn:x-evn-master:dsf_dslkfasldf_wsfj890")
-    assert len(g) == 4
+    new_datagraph_local = local_sop_ps.create_datagraph()
+    local_sop_ps.write(sample_graph, new_datagraph_local)
+    comments, g = local_sop_ps.read(new_datagraph_local)
+    assert len(g) == 6

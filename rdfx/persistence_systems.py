@@ -506,12 +506,14 @@ class SOP(PersistenceSystem):
             if graph_iri.startswith("urn:x-evn-master"):
                 response = self.client.get(
                     self.location
-                    + f"/service/{graph_iri.split(':')[2]}/!/exportToRDF/{rdf_format}"
+                    + f"/service/{graph_iri.split(':')[2]}/tbs/exportRDFFile?format={rdf_format}",
+                    headers={"Cookie": f"username=Administrator"},
                 )
             elif graph_iri.startswith("urn:x-evn-tag"):
                 response = self.client.get(
                     self.location
-                    + f"/service/{graph_iri.split(':')[2]}.{graph_iri.split(':')[3]}/!/exportToRDF/{rdf_format}"
+                    + f"/service/{graph_iri.split(':')[2]}.{graph_iri.split(':')[3]}/tbs/exportRDFFile?format={rdf_format}",
+                    headers={"Cookie": f"username=Administrator"},
                 )
             else:
                 raise NotImplemented(
@@ -576,9 +578,8 @@ class SOP(PersistenceSystem):
         :return:
         """
         query = f"""SELECT (COUNT(*) as ?count) WHERE {{GRAPH <{asset_iri}> {{?s ?p ?o}} }}"""
-        query_response = self.read(query, asset_iri, "application/sparql-results+json")
-        response_dict = json.loads(query_response.text)
-        return int(response_dict["results"]["bindings"][0]["count"]["value"])
+        query_response = self.query(query, asset_iri, "application/sparql-results+json")
+        return int(query_response[0]["count"]["value"])
 
     def create_datagraph(
         self,

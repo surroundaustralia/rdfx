@@ -24,6 +24,9 @@ moto = "^2.2.9"
 pytest-asyncio = "^0.16.0"
 twine = "^4.0.1"
 
+[tool.poetry.scripts]
+rdfx = "rdfx.rdfx_cli:main"
+
 [tool.poetry.extras]
 app = ["streamlit", "python-dotenv"]
 

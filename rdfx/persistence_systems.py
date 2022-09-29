@@ -441,11 +441,12 @@ class SOP(PersistenceSystem):
             )
 
         self.location = location
-        self.username = username
+        self.username = username if username else "Administrator"
         self.password = password
         self.client = None
         self.timeout = timeout
         self.local = True if location.startswith("http://localhost") else False
+        self._create_client()
 
     def write(self, g: Graph, graph_iri, leading_comments=None):
         if not (graph_iri.startswith("http") or graph_iri.startswith("urn")):
@@ -687,7 +688,6 @@ class SOP(PersistenceSystem):
             "_viewClass": "http://topbraid.org/teamwork#CreateProjectService",
             "projectType": "http://surroundaustralia.com/ns/platform/OntologyRegister",
             "owlImports": [
-                "urn:x-evn-master:sop_ontology_register_model",
                 "https://data.surroundaustralia.com/def/standards-baseline",
             ],
             "name": manifest_name,
@@ -770,8 +770,7 @@ class SOP(PersistenceSystem):
 
     def _create_client(self, test_connection=False):
         self.location += "/tbl"
-        self.client = httpx.Client()
-
+        self.client = httpx.Client(cookies={"username": self.username})
         self.client.get(self.location)
         if self.location.startswith("http://localhost"):
             return True  # auth is not required

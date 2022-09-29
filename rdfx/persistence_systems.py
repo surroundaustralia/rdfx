@@ -430,7 +430,7 @@ class SOP(PersistenceSystem):
 
     def __init__(
         self,
-        location: str = "http://localhost:8083",
+        location: Optional[str] = "http://localhost:8083",
         username: Optional[str] = "Administrator",
         password: Optional[str] = None,
         timeout: Optional[int] = 60,
@@ -441,7 +441,7 @@ class SOP(PersistenceSystem):
             )
 
         self.location = location
-        self.username = username if username else "Administrator"
+        self.username = username
         self.password = password
         self.client = None
         self.timeout = timeout

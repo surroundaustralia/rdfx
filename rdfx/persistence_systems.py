@@ -432,6 +432,7 @@ class SOP(PersistenceSystem):
         self,
         location: Optional[str] = "http://localhost:8083",
         username: Optional[str] = "Administrator",
+        auth_type: Optional[str] = "Basic",
         password: Optional[str] = None,
         timeout: Optional[int] = 60,
     ):
@@ -441,6 +442,7 @@ class SOP(PersistenceSystem):
             )
 
         self.location = location
+        self.auth_type = auth_type
         self.username = username
         self.password = password
         self.client = None
@@ -478,7 +480,12 @@ class SOP(PersistenceSystem):
             headers=headers,
             timeout=self.timeout,
         )
-        return parse_qs(response.text)["message"][0]
+        if response.status_code != 200:
+            raise Exception(
+                f"Error writing to SOP. Status code: {response.status_code}. Response: {response.text}"
+            )
+        else:
+            return parse_qs(response.text)["message"][0]
 
     def read_deprecated(
         self, query, graph_iri, return_format: Optional[str] = "application/rdf+xml"
@@ -701,6 +708,55 @@ class SOP(PersistenceSystem):
         manifest_iri = f"urn:x-evn-master:{response_dict['id']}"
         return manifest_iri
 
+    def create_file(
+        self,
+        file_path: Optional[Path] = None,
+        description: Optional[str] = None,
+        subjectArea: Optional[str] = None,
+        default_namespace: Optional[str] = None,
+        headers: Optional[dict] = None,
+    ):
+        """
+        :param headers: headers to add to the request
+        :param manifest_name: The name of the file. If not provided, the current time is used
+        :return: graph name
+        """
+
+        # set defaults
+        if not file_path:
+            file_path = f"Python_created_file_by_{getpass.getuser()}_at_{datetime.now().isoformat()}"
+        if not default_namespace:
+            default_namespace = (
+                f"https://data.surroundaustralia.com/file/{file_path}#".replace(
+                    " ", "_"
+                )
+            )
+        file_name = file_path.name
+        baseURI = default_namespace[:-1]
+        form_data = {
+            "_viewClass": "http://topbraid.org/teamwork#createRDFFile",
+            "_plainErrors": "true",
+            "baseURI": baseURI,
+            "fileName": file_name,
+            "path": "/",
+            "prefix": "ex",
+            "namespace": default_namespace,
+        }
+
+        exists = self.asset_exists(baseURI)
+        if not exists:
+            self._create_sop_asset(form_data, headers)
+        else:
+            raise ValueError(
+                f"Asset (probably a file) already exists with baseURI: {baseURI}"
+            )
+
+        # write the local file contents to the "skeleton" file that has been generated in EDG
+        comments, graph = File(file_path.parent).read(file_name)
+        self.write(g=graph, graph_iri=baseURI, leading_comments=comments)
+
+        return baseURI
+
     def asset_exists(self, graph_name: str) -> bool:
         """
         Checks whether an asset exists in SOP, returns True or False
@@ -731,8 +787,6 @@ class SOP(PersistenceSystem):
         # set defaults
         if not headers:
             headers = {}
-        if self.local:
-            headers["Cookie"] = "username=Administrator"
         if not self.client:
             self._create_client()
 
@@ -752,18 +806,14 @@ class SOP(PersistenceSystem):
             if response_dict["changed"]:
                 return response_dict
         elif "error" in keys:
-            if (
-                response_dict["error"]
-                == f"A working copy with the label {form_data['name']} already exists."
-            ):
-                print(
-                    f"Asset {form_data['name']} already exists in SOP instance {self.location}."
-                )
-                return response_dict
-            else:
-                raise ValueError(response_dict["error"])
+            raise ValueError(response_dict["error"])
         else:
-            raise Exception(f"Failed to create {form_data['name']} graph on SOP")
+            if response.status_code == 200:
+                return "Successful transaction - no response returned from EDG"
+            else:
+                raise Exception(
+                    f"Failed to create {form_data['name']} graph on SOP.\nError: {response.text}"
+                )
 
     def _close(self):
         self.client.get(self.location + "/purgeuser?app=edg")

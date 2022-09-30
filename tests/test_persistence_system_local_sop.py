@@ -1,6 +1,5 @@
-import json
-import os
 import uuid
+from pathlib import Path
 
 from rdflib import Graph
 
@@ -92,3 +91,9 @@ def test_read_asset():
     local_sop_ps.write(sample_graph, new_datagraph_local)
     comments, g = local_sop_ps.read(new_datagraph_local)
     assert len(g) == 6
+
+
+def test_create_file():
+    file_uri = local_sop_ps.create_file(Path("data/file_01.ttl"))
+    assert local_sop_ps.asset_exists(file_uri)
+    # TODO remove file

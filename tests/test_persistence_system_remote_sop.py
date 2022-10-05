@@ -5,6 +5,7 @@ import uuid
 from rdflib import Graph
 
 from rdfx.persistence_systems import SOP
+from rdfx import sop_creds
 
 sample_graph = Graph().parse(
     data="""
@@ -16,9 +17,10 @@ sample_graph = Graph().parse(
 existing_datagraph = "http://topbraid.org/examples/kennedys"
 
 remote_sop_ps = SOP(
-    os.getenv("REMOTE_SOP_SYSTEM_IRI"),
+    os.getenv("REMOTE_SOP_SYSTEM_IRI", "https://test"),
     os.getenv("REMOTE_SOP_USERNAME"),
-    os.getenv("REMOTE_SOP_PASSWORD"),
+    "https://test",
+    os.getenv("REMOTE_SOP_PASSWORD", "https://test"),
 )
 local_sop_ps = SOP()
 

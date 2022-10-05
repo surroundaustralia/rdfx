@@ -1,21 +1,26 @@
 from __future__ import annotations
 
+import configparser
 import getpass
 import io
 import json
+import os
 from abc import ABC, abstractmethod
 from datetime import datetime
 from http import HTTPStatus
 from io import BytesIO, StringIO
 from json.decoder import JSONDecodeError
+from os import getenv
 from pathlib import Path
-from typing import List, Literal, Optional, Tuple, Union, get_args
+from typing import List, Optional, Tuple, Union, get_args
+from typing import Literal
 from urllib.parse import parse_qs
 
 import boto3
 import httpx
 from botocore.errorfactory import ClientError
 from rdflib import Graph, URIRef
+
 
 RDF_FORMATS = Literal["ttl", "turtle", "xml", "json-ld", "nt", "n3"]
 VALID_RDF_FORMATS: Tuple[RDF_FORMATS, ...] = get_args(RDF_FORMATS)
@@ -433,6 +438,7 @@ class SOP(PersistenceSystem):
         location: str = "http://localhost:8083",
         username: Optional[str] = "Administrator",
         password: Optional[str] = None,
+        auth_type: Optional[str] = "basic",
         timeout: Optional[int] = 60,
     ):
         if not location.startswith("http"):
@@ -440,12 +446,33 @@ class SOP(PersistenceSystem):
                 f'The value you supplied for location ({location}) must start with "http" or "https"'
             )
 
-        self.location = location
-        self.username = username
-        self.password = password
-        self.client = None
-        self.timeout = timeout
-        self.local = True if location.startswith("http://localhost") else False
+        if auth_type == "oauth":
+            if os.getenv("SOP_CREDS_FILE_PATH"):
+                creds_path = os.getenv("SOP_CREDS_FILE_PATH")
+                self.creds = SopCredentials(
+                    source="file", creds_file_path=Path(creds_path)
+                )
+            else:
+                raise Exception(
+                    "you need to specify a path to your credentials in the SOP_CREDS_FILE_PATH environment variable"
+                )
+            self.location = self.creds.endpoint
+            self.username = username
+            self.password = password
+            self.auth_type = auth_type
+            self.client = None
+            self.local = True if self.location.startswith("http://localhost") else False
+            self.timeout = timeout
+
+        elif auth_type == "basic":
+            self.location = location
+            self.username = username
+            self.password = password
+            self.auth_type = auth_type
+            self.client = None
+            self.timeout = timeout
+            self.local = True if location.startswith("http://localhost") else False
+            self.access_token = None
 
     def write(self, g: Graph, graph_iri, leading_comments=None):
         if not (graph_iri.startswith("http") or graph_iri.startswith("urn")):
@@ -456,6 +483,8 @@ class SOP(PersistenceSystem):
             self._create_client()
         content = self.generate_string(g, "ttl", leading_comments)
         headers = {}
+        if self.access_token:
+            headers["Authorization"] = f"Bearer {self.access_token}"
         if self.local:
             headers["Cookie"] = "username=Administrator"
         if graph_iri.startswith("urn:x-evn-tag"):
@@ -552,6 +581,9 @@ class SOP(PersistenceSystem):
     ):
         if not self.client:
             self._create_client()
+        headers = {"Accept": return_format}
+        if self.access_token:
+            headers["Authorization"] = f"Bearer {self.access_token}"
         try:
             response = self.client.post(
                 self.location + "/sparql",
@@ -560,7 +592,7 @@ class SOP(PersistenceSystem):
                     "with-imports": "false",
                     "default-graph-uri": graph_iri,
                 },
-                headers={"Accept": return_format},
+                headers=headers,
             )
             text_result = json.loads(response.text)
             result = [
@@ -710,6 +742,9 @@ class SOP(PersistenceSystem):
         if not self.client:
             self._create_client()
 
+        headers = {"Accept": "application/sparql-results+json"}
+        if self.access_token:
+            headers["Authorization"] = f"Bearer {self.access_token}"
         if graph_name.startswith("urn:x-evn-tag"):
             if not self.asset_exists(self.graph_from_workflow(graph_name)):
                 return False
@@ -719,7 +754,7 @@ class SOP(PersistenceSystem):
         response = self.client.post(
             self.location + "/sparql",
             data={"query": query},
-            headers={"Accept": "application/sparql-results+json"},
+            headers=headers,
         )
         try:
             return json.loads(response.text)["boolean"]
@@ -735,6 +770,8 @@ class SOP(PersistenceSystem):
             headers["Cookie"] = "username=Administrator"
         if not self.client:
             self._create_client()
+        if self.access_token:
+            headers["Authorization"] = f"Bearer {self.access_token}"
 
         # send to SOP
         response = self.client.post(
@@ -775,7 +812,31 @@ class SOP(PersistenceSystem):
         self.client.get(self.location)
         if self.location.startswith("http://localhost"):
             return True  # auth is not required
-        else:
+
+        elif self.auth_type == "oauth":
+
+            request_body = {
+                "client_id": self.creds.client_id,
+                "client_secret": self.creds.client_secret,
+                "grant_type": "client_credentials",
+                "scope": self.creds.client_scope,
+            }
+            try:
+                response = self.client.post(
+                    url=self.creds.auth_server_url,
+                    data=request_body,
+                    headers={"Accept": "application/json"},
+                )
+                tokens = response.json()
+                self.access_token = tokens["access_token"]
+                self.token_time = datetime.now()
+
+                print(self.access_token)
+            except Exception as error:
+                print(error.code)
+                print(error.reason)
+
+        elif self.auth_type == "basic":
             auth_response = self.client.post(
                 self.location + "/j_security_check",
                 data={
@@ -834,6 +895,82 @@ def prepare_files_list(files: Union[str, list, Path]) -> list:
         elif fp.is_file():
             files_list.append(fp)
     return files_list
+
+
+########################################################################
+#
+#   Class SopCredentials - controls the oauth etc for connecting to the SOP Instance
+#
+########################################################################
+
+
+class SopCredentials:
+    """A small class to hold SOP credentials"""
+
+    def __init__(
+        self,
+        source: Literal["file", "env", "given"] = "given",
+        endpoint="http://localhost:8083",
+        access_token="",
+        token_time="",
+        token_interval=3600,
+        sendgraph="urn:x-evn-master:load_processing_graph",
+        sendont="urn:x-evn-master:bdr_data_datatype_ontology",
+        creds_file_path: Path = None,
+        creds_file_section: str = "default",
+        env_endpoint_name: str = "SOP_ENDPOINT",
+        env_auth_server_url_name: str = "SOP_auth_server_url_name",
+        env_client_id_name: str = "SOP_client_id_name",
+        env_client_secret_name: str = "SOP_client_secret_name",
+        env_client_scope_name: str = "SOP_client_scope_name",
+        env_client_sop_graph: str = "SOP_client_sop_graph",
+        env_client_sop_ont: str = "SOP_client_sop_ont",
+    ):
+        # validation
+        if source == "file":
+            if not Path(creds_file_path).is_file():
+                raise ValueError(
+                    "If you select 'file' as source, you must provide a valid file for creds_file_path"
+                    f"You supplied: {creds_file_path}"
+                )
+        else:
+            if creds_file_path is not None:
+                raise ValueError(
+                    "You have supplied a value for creds_file_path that is not a file, "
+                    f"or a file that cannot be accessed: {creds_file_path}"
+                )
+
+        # use
+        if source == "given":
+            self.endpoint = endpoint
+            self.send_graph = sendgraph
+            self.send_ont = sendont
+        elif source == "file":
+            config = configparser.ConfigParser()
+            config.read(creds_file_path)
+            self.endpoint = config[creds_file_section]["sop_endpoint"]
+            self.auth_server_url = config[creds_file_section]["auth_server_url"]
+            self.client_id = config[creds_file_section]["client_id"]
+            self.client_secret = config[creds_file_section]["client_secret"]
+            self.client_scope = config[creds_file_section]["client_scope"]
+            self.send_graph = config[creds_file_section]["sop_graph"]
+            self.send_ont = config[creds_file_section]["sop_ont"]
+        elif source == "env":
+            self.endpoint = getenv(env_endpoint_name)
+            self.auth_server_url = getenv(env_auth_server_url_name)
+            self.client_id = getenv(env_client_id_name)
+            self.client_secret = getenv(env_client_secret_name)
+            self.client_scope = getenv(env_client_scope_name)
+            self.send_graph = getenv(env_client_sop_graph)
+            self.send_ont = getenv(env_client_sop_ont)
+
+        if self.endpoint is None:
+            raise ValueError(
+                "Invalid SOP credentials. No value for self.endpoint has been obtained"
+            )
+
+        # get a access_token
+        self.token_interval = token_interval
 
 
 PERSISTENCE_SYSTEMS = {k.__name__: k for k in [String, File, SOP, GraphDB, Fuseki, S3]}

@@ -49,7 +49,6 @@ def test_ttl_comments():
     sdo:email "nicholas.car@surroundaustralia.com"^^xsd:anyURI ;
     sdo:jobTitle "Data Systems Architect" ;
     sdo:name "Nicholas J. Car" .
-
 """
     input_file = Path("tests/data/file_01.ttl")
     output_format = "turtle"

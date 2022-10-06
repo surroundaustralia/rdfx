@@ -266,6 +266,22 @@ class S3(PersistenceSystem):
         except ClientError:
             return False
 
+    def get_files(self, folder: str = ""):
+        """
+        Gives a list of files in a folder in an S3 bucket
+        :param folder: the folder in the S3 bucket to look in, if none is provided defaults to root dir
+        :return: list of file names as strings
+        """
+        args = ["s3"]
+        kwargs = {
+            "aws_access_key_id": self.aws_key,
+            "aws_secret_access_key": self.aws_secret,
+            "region_name": self.region,
+        }
+        client = boto3.client(*args, **kwargs)
+        contents = client.list_objects_v2(Bucket=self.bucket, Prefix=folder)["Contents"]
+        return [file["Key"] for file in contents]
+
     def read(self, graph_name, rdf_format: RDF_FORMATS = None):
         args = ["s3"]
         kwargs = {

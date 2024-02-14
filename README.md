@@ -150,3 +150,6 @@ Updates around persistence systems:
 <david.habgood@surroundaustrlaia.com> \
 GitHub: [recalcitrantsupplant](https://github.com/recalcitrantsupplant) \
 ORCID: <https://orcid.org/0000-0002-3322-1868>
+
+[SOP]: ???
+[EDG]: ???

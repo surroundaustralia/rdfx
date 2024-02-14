@@ -7,29 +7,56 @@ systems".
 
 ## How to Use
 
-The command line utility covers merge and conversion functionality, and simplifies certain aspects of this. The
+The command line utility covers merge and conversion functionality, and simplifies certain aspects of this.
 
 ### Python
 
-Run the `rdfx.py` script with Python having installed the packages required by _requirements.txt_.
+Run the `rdfx.py` script with Python, having installed the required packages found in _requirements.txt_,
+for example with `pip install -r requirements.txt`.
 
-### BASH (Linux, Mac etc)
+### BASH (Linux, Mac, etc.)
 
 To utilise the command line util run:
-`python rdfx.py *args`
+
+```shell
+python rdfx.py *args
+```
 
 To convert a file:
-`python rdfx.py convert myfile.ttl -f nt -o output_dir`
+
+```shell
+python rdfx.py convert myfile.ttl -f nt -o output_dir
+```
+
 For multiple files:
-`python rdfx.py convert myfile1.ttl myfile2.ttl -f nt -o output_dir`
+
+```shell
+python rdfx.py convert myfile1.ttl myfile2.ttl -f nt -o output_dir
+```
+
 A directory of files:
-`python rdfx.py convert files_dir -f nt -o output_dir`
+
+```shell
+python rdfx.py convert files_dir -f nt -o output_dir
+```
+
 To merge multiple files:
-`python rdfx.py merge myfile1.ttl myfile2.ttl -f nt -o output_dir`
+
+```shell
+python rdfx.py merge myfile1.ttl myfile2.ttl -f nt -o output_dir
+```
+
 To merge a directory of files:
-`python rdfx.py merge files_dir -f nt -o output_dir`
+
+```shell
+python rdfx.py merge files_dir -f nt -o output_dir
+```
+
 To remove sort and remove unused prefixes in a turtle file:
-`python rdfx.py clean myfile.ttl`
+
+```shell
+python rdfx.py clean myfile.ttl
+```
 
 To simplify usage of the command line utility at present, the following behaviour has been set:
 
@@ -47,21 +74,21 @@ directories or multiple files are converted/merged.
 The python utilities behind the command line tool can be configured to set user specified filenames, for these cases
 use Python.
 
-### SOP / EDG usage
+### [SOP] / [EDG] usage
 
-The SOP persistence system can be used to read and write to/from EDG master graphs and workflows. The SOP persistence
-system can be instantiated with the following optional parameters:
+The [SOP] persistence system can be used to read and write to/from [EDG] master graphs and workflows.
+The [SOP] persistence system can be instantiated with the following optional parameters:
 
 1. location, defaults to "http://localhost:8083"
 2. username, defaults to "Administrator"
 3. password, defaults to ""
 4. timeout, defaults to 60 seconds
-   Example instantiation with defaults:
+    Example instantiation with defaults:
 
-```
-from rdfx.persistence_systems import SOP
-local_sop_ps = SOP()
-```
+    ```python
+    from rdfx.persistence_systems import SOP
+    local_sop_ps = SOP()
+    ```
 
 The following methods are available on instances of the SOP class:
 
@@ -80,7 +107,7 @@ The following methods are available on instances of the SOP class:
 
 These usage notes come from running the help command in the tool, e.g. `python rdfx.ph -h`:
 
-```bash
+```text
 usage: rdfx.py [-h] [--format {ttl,turtle,json,json-ld,jsonld,owl,xml,rdf,nt,n3}] [-o OUTPUT] [--comments COMMENTS] {convert,merge} data [data ...]
 
 positional arguments:
@@ -107,17 +134,22 @@ This uses [RDFlib](https://pypi.org/project/rdflib/).
 ## Contact
 
 Original library:
-**Nicholas J. Car**
-*Data Systems Architect*
-[SURROUND Australia Pty Ltd](http://surroundaustralia.com)
-<nicholas.car@surroundaustralia.com>
-GitHub: [nicholascar](https://github.com/nicholascar)
+
+**Nicholas J. Car** \
+*Data Systems Architect* \
+[SURROUND Australia Pty Ltd](http://surroundaustralia.com) \
+<nicholas.car@surroundaustralia.com> \
+GitHub: [nicholascar](https://github.com/nicholascar) \
 ORCID: <https://orcid.org/0000-0002-8742-7730>
 
 Updates around persistence systems:
-**David Habgood**
-*Application Architect*
-[SURROUND Australia Pty Ltd](https://surroundaustralia.com)
-<david.habgood@surroundaustrlaia.com>
-GitHub: [nicholascar](https://github.com/recalcitrantsupplant)
-https://orcid.org/0000-0002-3322-1868
+
+**David Habgood** \
+*Application Architect* \
+[SURROUND Australia Pty Ltd](https://surroundaustralia.com) \
+<david.habgood@surroundaustrlaia.com> \
+GitHub: [recalcitrantsupplant](https://github.com/recalcitrantsupplant) \
+ORCID: <https://orcid.org/0000-0002-3322-1868>
+
+[SOP]: ???
+[EDG]: ???
